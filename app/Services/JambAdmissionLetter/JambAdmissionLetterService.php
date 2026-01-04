@@ -107,10 +107,7 @@ class JambAdmissionLetterService
 
     public function complete(string $id, string $filePath, User $admin)
     {
-        // Only Administrator can complete
-        if ($admin->role !== 'administrator') {
-            abort(403, 'Only Administrator can complete jobs');
-        }
+
 
         return DB::transaction(function () use ($id, $filePath, $admin) {
 
@@ -128,7 +125,7 @@ class JambAdmissionLetterService
 
             // Update the job as completed
             $job->update([
-                'status'       => 'completed_by_admin', // marks as completed by admin, awaiting approval
+                'status'       => 'completed', // marks as completed by admin, awaiting approval
                 'result_file'  => $filePath,
                 'completed_by' => $admin->id,
             ]);
@@ -168,16 +165,13 @@ class JambAdmissionLetterService
 
     public function approve(string $id, User $superAdmin)
     {
-        // Ensure only Super Admin can approve
-        if ($superAdmin->role !== 'superadmin') {
-            abort(403, 'Only Super Admin can approve jobs');
-        }
+
 
         return DB::transaction(function () use ($id, $superAdmin) {
 
             $job = $this->repo->find($id);
 
-            if ($job->status !== 'completed_by_admin') {
+            if ($job->status !== 'completed') {
                 abort(422, 'Job is not awaiting approval');
             }
 
