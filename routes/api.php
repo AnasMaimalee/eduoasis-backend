@@ -54,6 +54,9 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/my', [JambResultController::class, 'my'])
             ->middleware('role:user');
 
+        Route::get('/administrator', [JambResultController::class, 'processedByAdmin'])
+            ->middleware('role:administrator');
+
         Route::post('/', [JambResultController::class, 'store'])
             ->middleware('role:user');
 
@@ -95,6 +98,9 @@ Route::middleware('auth:api')->group(function () {
 
         // User's own requests
         Route::get('/my', [JambAdmissionLetterController::class, 'my']);
+        Route::get('/administrator', [JambAdmissionLetterController::class, 'processedByAdmin'])
+            ->middleware('role:administrator');
+
 
         /**
          * =================
@@ -147,6 +153,7 @@ Route::middleware('auth:api')->group(function () {
 
         // User's own requests
         Route::get('/my', [JambUploadStatusController::class, 'my']);
+        Route::get('/administrator', [JambUploadStatusController::class, 'processedByAdmin']);
 
         /**
          * =================
@@ -199,6 +206,7 @@ Route::middleware('auth:api')->group(function () {
 
         // User's own requests
         Route::get('/my', [JambAdmissionStatusController::class, 'my']);
+        Route::get('/administrator', [JambAdmissionStatusController::class, 'processedByAdmin']);
 
         /**
          * =================

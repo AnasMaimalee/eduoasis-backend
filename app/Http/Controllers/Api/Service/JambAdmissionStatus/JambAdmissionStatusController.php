@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api\Service\JambAdmissionStatus;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\JambAdmissionStatusRequestResource;
+use App\Models\JambAdmissionStatusRequest;
 use Illuminate\Http\Request;
 use App\Services\JambAdmissionStatus\JambAdmissionStatusService;
-use App\Http\Resources\JambAdmissionLetterRequestResource;
 
 class JambAdmissionStatusController extends Controller
 {
@@ -26,6 +26,55 @@ class JambAdmissionStatusController extends Controller
         return response()->json(
             $this->service->my(auth()->user())
         );
+    }
+
+    public function processedByAdmin()
+    {
+        $admin = auth()->user();
+
+        if (! $admin->hasRole('administrator')) {
+            abort(403, 'Only administrators can view processed jobs');
+        }
+
+        $jobs = JambAdmissionStatusRequest::with([
+            'user',
+            'service',
+            'completedBy.roles', // ✅ FIXED
+        ])
+            ->where('completed_by', $admin->id)
+            ->where('status', 'completed')
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'message' => 'Jobs processed by administrator',
+            'data' => $jobs->map(function ($job) {
+                return [
+                    'id' => $job->id,
+                    'status' => $job->status,
+
+                    'user' => [
+                        'name'  => $job->user->name,
+                        'email' => $job->user->email,
+                    ],
+
+                    'service' => $job->service->name,
+
+                    // ✅ Completed admin details + role
+                    'completed_by' => [
+                        'id'   => $job->completedBy->id,
+                        'name' => $job->completedBy->name,
+                        'role' => $job->completedBy->roles->pluck('name')->first(),
+                    ],
+
+                    'result_file_url' => $job->result_file
+                        ? asset('storage/' . $job->result_file)
+                        : null,
+
+                    'processed_at' => $job->updated_at,
+                ];
+            }),
+        ]);
     }
 
     // User submits request

@@ -242,7 +242,10 @@ class JambUploadStatusService
             );
 
             return [
-                'message' => 'Job rejected and refunded',
+                'message' => 'Job rejected and user refunded',
+                'job_id' => $job->id,
+                'refund_amount' => $job->customer_price,
+                'reason' => $reason,
             ];
         });
     }

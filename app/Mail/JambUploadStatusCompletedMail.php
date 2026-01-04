@@ -2,21 +2,21 @@
 
 namespace App\Mail;
 
+use App\Models\JambUploadStatusRequest;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use App\Models\JambResultRequest;
 
 class JambUploadStatusCompletedMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public JambResultRequest $job;
+    public JambUploadStatusRequest $job;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(JambResultRequest $job)
+    public function __construct(JambUploadStatusRequest $job)
     {
         $this->job = $job;
     }
@@ -27,7 +27,7 @@ class JambUploadStatusCompletedMail extends Mailable
     public function build()
     {
         return $this->subject('Your JAMB Result is Ready')
-            ->view('emails.services.jamb-uplaod-status-completed')
+            ->view('emails.services.jamb-upload-status-completed')
             ->with([
                 'job' => $this->job, // <-- make $job available in the blade
             ]);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Service\JambUploadStatus;
 
 use App\Http\Controllers\Controller;
+use App\Models\JambUploadStatusRequest;
 use Illuminate\Http\Request;
 use App\Services\JambUploadStatus\JambUploadStatusService;
 use App\Http\Resources\JambUploadStatusRequestResource;
@@ -26,7 +27,55 @@ class JambUploadStatusController extends Controller
             $this->service->my(auth()->user())
         );
     }
+    public function processedByAdmin()
+    {
+        $admin = auth()->user();
 
+        if (! $admin->hasRole('administrator')) {
+            abort(403, 'Only administrators can view processed jobs');
+        }
+
+        $jobs = JambUploadStatusRequest::with([
+            'user',
+            'service',
+            'completedBy.roles', // ✅ FIXED
+        ])
+            ->where('completed_by', $admin->id)
+            ->where('status', 'completed')
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'message' => 'Jobs processed by administrator',
+            'data' => $jobs->map(function ($job) {
+                return [
+                    'id' => $job->id,
+                    'status' => $job->status,
+
+                    'user' => [
+                        'name'  => $job->user->name,
+                        'email' => $job->user->email,
+                    ],
+
+                    'service' => $job->service->name,
+
+                    // ✅ Completed admin details + role
+                    'completed_by' => [
+                        'id'   => $job->completedBy->id,
+                        'name' => $job->completedBy->name,
+                        'role' => $job->completedBy->roles->pluck('name')->first(),
+                    ],
+
+                    'result_file_url' => $job->result_file
+                        ? asset('storage/' . $job->result_file)
+                        : null,
+
+                    'processed_at' => $job->updated_at,
+                ];
+            }),
+        ]);
+    }
+    
     // User submits request
     public function store(Request $request)
     {

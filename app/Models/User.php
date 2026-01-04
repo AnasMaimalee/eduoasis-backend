@@ -93,4 +93,10 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->hasMany(ServiceRequest::class);
     }
+    // User model
+    public function primaryRole(): ?string
+    {
+        return $this->roles->first()?->name;
+    }
+
 }

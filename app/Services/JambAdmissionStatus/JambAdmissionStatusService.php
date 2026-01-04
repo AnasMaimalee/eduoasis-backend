@@ -2,6 +2,7 @@
 
 namespace App\Services\JambAdmissionStatus;
 
+use App\Mail\JambUploadStatusCompletedMail;
 use App\Models\User;
 use App\Models\Service;
 use Illuminate\Support\Facades\DB;
@@ -9,7 +10,6 @@ use Illuminate\Support\Facades\Mail;
 use App\Repositories\JambAdmissionStatus\JambAdmissionStatusRepository;
 use App\Services\WalletService;
 use App\Mail\WalletDebited;
-use App\Mail\JambAdmissionStatusCompletedMail;
 use App\Mail\JambAdmissionStatusRejectedMail;
 
 class JambAdmissionStatusService
@@ -135,7 +135,7 @@ class JambAdmissionStatusService
 
             // Send email notification to user
             Mail::to($job->user->email)->send(
-                new JambAdmissionStatusCompletedMail($job)
+                new JambUploadStatusCompletedMail($job)
             );
 
             return [
@@ -242,7 +242,10 @@ class JambAdmissionStatusService
             );
 
             return [
-                'message' => 'Job rejected and refunded',
+                'message' => 'Job rejected and user refunded',
+                'job_id' => $job->id,
+                'refund_amount' => $job->customer_price,
+                'reason' => $reason,
             ];
         });
     }
