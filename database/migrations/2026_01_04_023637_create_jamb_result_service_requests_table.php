@@ -19,6 +19,7 @@ return new class extends Migration
 
             $table->string('email');
             $table->string('phone_number')->nullable();
+            $table->string('profile_code')->nullable();
             $table->string('registration_number')->nullable();
 
             // 💰 Pricing snapshot

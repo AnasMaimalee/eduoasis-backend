@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
         $superAdmin->assignRole('superadmin');
 
         $adminOne = User::factory()->create([
-            'name' => 'Admin One',
+            'name' => 'Administrator',
             'email' => 'admin@jambportal.com',
             'password' => bcrypt('password'),
         ]);

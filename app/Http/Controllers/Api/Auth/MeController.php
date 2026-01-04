@@ -125,19 +125,44 @@ class MeController extends Controller
     {
         $menus = [
             'user' => [
-                ['name' => 'Home', 'route' => '/'],
-                ['name' => 'OLevel Upload', 'route' => '/olevel'],
-                ['name' => 'JAMB Service', 'route' => '/services'],
+                ['name' => 'Dashboard', 'route' => '/user/dashboard', 'icon' => 'DashboardOutlined'],
+                ['name' => 'Home', 'route' => '/', 'icon' => 'HomeOutlined'],
+                ['name' => 'JAMB Services', 'route' => '/services/jamb-result', 'icon' => 'AppstoreOutlined'],
+                ['name' => 'JAMB Admission Letter', 'route' => '/services/admission-letter', 'icon' => 'FileTextOutlined'],
+                ['name' => 'JAMB Olevel Status', 'route' => '/services/olevel-status', 'icon' => 'ProfileOutlined'],
+                ['name' => 'Admission Letter Checking', 'route' => '/services/check-admission', 'icon' => 'CheckCircleOutlined'],
+                ['name' => 'JAMB Result Notification', 'route' => '/services/result-notification', 'icon' => 'NotificationOutlined'],
             ],
             'administrator' => [
-                ['name' => 'Dashboard', 'route' => '/admin/dashboard'],
-                ['name' => 'Pending Jobs', 'route' => '/admin/jobs'],
+                ['name' => 'Dashboard', 'route' => '/admin/dashboard', 'icon' => 'DashboardOutlined'],
+
+                // JAMB Services for Admin (different routes from user)
+                ['name' => 'JAMB Services', 'route' => '/admin/services/jamb-result', 'icon' => 'AppstoreOutlined'],
+                ['name' => 'JAMB Admission Letter', 'route' => '/admin/services/admission-letter', 'icon' => 'FileTextOutlined'],
+                ['name' => 'JAMB Olevel Status', 'route' => '/admin/services/olevel-status', 'icon' => 'ProfileOutlined'],
+                ['name' => 'Admission Letter Checking', 'route' => '/admin/services/check-admission', 'icon' => 'CheckCircleOutlined'],
+                ['name' => 'JAMB Result Notification', 'route' => '/admin/services/result-notification', 'icon' => 'NotificationOutlined'],
             ],
             'superadmin' => [
-                ['name' => 'Dashboard', 'route' => '/super/dashboard'],
-                ['name' => 'Manage Admins', 'route' => '/super/admins'],
-                ['name' => 'Pricing', 'route' => '/super/pricing'],
-            ]
+                ['name' => 'Dashboard', 'route' => '/super/dashboard', 'icon' => 'DashboardOutlined'],
+
+                // Management menus
+                ['name' => 'Manage Users', 'route' => '/super/users', 'icon' => 'UserOutlined'],
+                ['name' => 'Manage Administrators', 'route' => '/super/admins', 'icon' => 'UserSwitchOutlined'],
+                ['name' => 'Manage Services', 'route' => '/super/services', 'icon' => 'AppstoreAddOutlined'],
+                ['name' => 'Pricing', 'route' => '/super/pricing', 'icon' => 'DollarOutlined'],
+
+                // JAMB Services for Superadmin (different routes)
+                ['name' => 'JAMB Services', 'route' => '/super/services/jamb-result', 'icon' => 'AppstoreOutlined'],
+                ['name' => 'JAMB Admission Letter', 'route' => '/super/services/admission-letter', 'icon' => 'FileTextOutlined'],
+                ['name' => 'JAMB Olevel Status', 'route' => '/super/services/olevel-status', 'icon' => 'ProfileOutlined'],
+                ['name' => 'Admission Letter Checking', 'route' => '/super/services/check-admission', 'icon' => 'CheckCircleOutlined'],
+                ['name' => 'JAMB Result Notification', 'route' => '/super/services/result-notification', 'icon' => 'NotificationOutlined'],
+
+                // Superadmin specific JAMB requests
+                ['name' => 'All JAMB Requests', 'route' => '/super/jamb-requests', 'icon' => 'FileDoneOutlined'],
+            ],
+
         ];
 
         return $menus[$user->getRoleNames()->first()] ?? [];
