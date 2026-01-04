@@ -1,0 +1,40 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
+
+class DatabaseSeeder extends Seeder
+{
+    public function run(): void
+    {
+        // 1️⃣ Seed roles and permissions
+        $this->call(RolePermissionSeeder::class);
+        $this->call(ServiceSeeder::class);
+        // 2️⃣ Create users and assign roles
+        $superAdmin = User::factory()->create([
+            'name' => 'Super Admin',
+            'email' => 'superadmin@jambportal.com',
+            'password' => bcrypt('password'),
+        ]);
+        $superAdmin->assignRole('superadmin');
+
+        $adminOne = User::factory()->create([
+            'name' => 'Admin One',
+            'email' => 'admin@jambportal.com',
+            'password' => bcrypt('password'),
+        ]);
+        $adminOne->assignRole('administrator');
+
+        $normalUser = User::factory()->create([
+            'name' => 'Anas Maimalee',
+            'email' => 'anasment6@gmail.com',
+            'password' => bcrypt('password'),
+        ]);
+        $normalUser->assignRole('user');
+
+        $this->call(WalletSeeder::class);
+    }
+}
