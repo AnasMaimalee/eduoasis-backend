@@ -49,31 +49,31 @@ class ServicePriceController extends Controller
                 'min:0',
                 'required_without:customer_price',
             ],
+            'description' => 'nullable|string|max:255|min:10',
         ]);
 
         if (
             isset($validated['customer_price'], $validated['admin_payout']) &&
-            $validated['admin_payout'] > $validated['customer_price']
+            $validated['admin_payout'] > $validated['customer_price'] &&
+            $validated['description']
         ) {
             abort(422, 'Admin payout cannot be greater than customer price');
         }
 
         $service = $this->servicePriceService->updatePrices(
             $serviceId,
-            isset($validated['customer_price'])
-                ? (float) $validated['customer_price']
-                : null,
-            isset($validated['admin_payout'])
-                ? (float) $validated['admin_payout']
-                : null,
-        );
+            $validated['customer_price'] ?? null,
+            $validated['admin_payout'] ?? null,
+            $validated['description'] ?? null,
 
+        );
 
         return response()->json([
             'message' => 'Service prices updated successfully',
             'service' => [
                 'id'             => $service->id,
                 'name'           => $service->name,
+                'description'    => $service->description,
                 'customer_price' => $service->customer_price,
                 'admin_payout'   => $service->admin_payout,
             ],

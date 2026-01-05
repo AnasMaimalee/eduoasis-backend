@@ -17,7 +17,8 @@ class ServicePriceService
     public function updatePrices(
         string $serviceId,
         ?float $customerPrice = null,
-        ?float $adminPayout = null
+        ?float $adminPayout = null,
+        ?string $description = null
     ): Service {
         // 1️⃣ Find service
         $service = $this->serviceRepo->find($serviceId);
@@ -25,6 +26,7 @@ class ServicePriceService
         // 2️⃣ Delegate update logic
         return $this->serviceRepo->updatePrices(
             $service,
+            $description,
             $customerPrice,
             $adminPayout
         );
