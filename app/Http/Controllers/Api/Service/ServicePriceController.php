@@ -20,7 +20,7 @@ class ServicePriceController extends Controller
             abort(403, 'Unauthorized action.');
         }
         $services = Service::where('active', true)
-            ->get(['id', 'name', 'customer_price', 'admin_payout']);
+            ->get(['id', 'name', 'description', 'customer_price', 'admin_payout']);
 
         return response()->json($services);
     }
@@ -60,9 +60,14 @@ class ServicePriceController extends Controller
 
         $service = $this->servicePriceService->updatePrices(
             $serviceId,
-            $validated['customer_price'] ?? null,
-            $validated['admin_payout'] ?? null
+            isset($validated['customer_price'])
+                ? (float) $validated['customer_price']
+                : null,
+            isset($validated['admin_payout'])
+                ? (float) $validated['admin_payout']
+                : null,
         );
+
 
         return response()->json([
             'message' => 'Service prices updated successfully',
