@@ -143,6 +143,10 @@ class JambAdmissionResultNotificationService
                 abort(422, 'Invalid job state');
             }
 
+            if($job->status == "approved"){
+                abort(422, 'Job already approved');
+            }
+
             // Update the job as completed
             $job->update([
                 'status'       => 'completed', // marks as completed by admin, awaiting approval
@@ -190,9 +194,15 @@ class JambAdmissionResultNotificationService
             abort(403, 'Unauthorized financial action');
         }
 
+
+
         return DB::transaction(function () use ($id, $superAdmin) {
 
             $job = $this->repo->find($id);
+
+            if($job->status == "rejected"){
+                abort(422, 'Job already rejected');
+            }
 
             if ($job->status !== 'completed') {
                 abort(422, 'Job is not awaiting approval');

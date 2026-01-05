@@ -11,6 +11,9 @@ use App\Http\Controllers\Api\Service\JambAdmissionLetter\JambAdmissionLetterCont
 use App\Http\Controllers\Api\Service\JambUploadStatus\JambUploadStatusController;
 use App\Http\Controllers\Api\Service\JambAdmissionStatus\JambAdmissionStatusController;
 use App\Http\Controllers\Api\Service\JambAdmissionResultNotification\JambAdmissionResultNotificationController;
+use App\Http\Controllers\Api\Dashboard\AdminDashboardController;
+use App\Http\Controllers\Api\Dashboard\UserDashboardController;
+use App\Http\Controllers\Api\Dashboard\SuperAdminDashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -298,3 +301,18 @@ Route::middleware('auth:api')->group(function () {
             ->middleware('role:superadmin');
     });
 });
+
+Route::middleware(['auth:api'])->group(function () {
+
+    Route::get('/dashboard/user', [UserDashboardController::class, 'index']);
+
+    Route::middleware('role:administrator')->group(function () {
+        Route::get('/dashboard/admin', [AdminDashboardController::class, 'index']);
+    });
+
+    Route::middleware('role:superadmin')->group(function () {
+        Route::get('/dashboard/superadmin', [SuperAdminDashboardController::class, 'index']);
+    });
+
+});
+

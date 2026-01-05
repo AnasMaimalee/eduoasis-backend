@@ -140,6 +140,7 @@ class JambAdmissionStatusService
                 abort(403, 'You did not take this job');
             }
 
+
             // Only allow completing jobs that are in processing state
             if ($job->status !== 'processing') {
                 abort(422, 'Invalid job state');
@@ -199,6 +200,10 @@ class JambAdmissionStatusService
                 abort(422, 'Job is not awaiting approval');
             }
 
+            if($job->status == "approved"){
+                abort(422, 'Job already approved');
+            }
+
             if (!$job->completedBy) {
                 abort(422, 'Completed by Administrator not found');
             }
@@ -251,6 +256,10 @@ class JambAdmissionStatusService
         return DB::transaction(function () use ($id, $reason, $superAdmin) {
 
             $job = $this->repo->find($id);
+
+            if($job->status == "rejected"){
+                abort(422, 'Job already rejected');
+            }
 
             $this->walletService->transfer(
                 $superAdmin,

@@ -197,7 +197,9 @@ class JambUploadStatusService
             if ($job->status !== 'completed') {
                 abort(422, 'Job is not awaiting approval');
             }
-
+            if($job->status == "approved"){
+                abort(422, 'Job already approved');
+            }
             if (!$job->completedBy) {
                 abort(422, 'Completed by Administrator not found');
             }
@@ -250,7 +252,9 @@ class JambUploadStatusService
         return DB::transaction(function () use ($id, $reason, $superAdmin) {
 
             $job = $this->repo->find($id);
-
+            if($job->status == "rejected"){
+                abort(422, 'Job already rejected');
+            }
             $this->walletService->transfer(
                 $superAdmin,
                 $job->user,

@@ -180,9 +180,13 @@ class JambResultService
         return DB::transaction(function () use ($id, $superAdmin) {
 
             $job = $this->repo->find($id);
+            if ($job->status !== 'completed') {
+                abort(422, 'Job is not awaiting approval');
+            }
 
-
-
+            if($job->status == "approved"){
+                abort(422, 'Job already approved');
+            }
             // Credit admin
             $this->walletService->credit(
                 $job->completedBy,
@@ -220,7 +224,9 @@ class JambResultService
 
             $job = $this->repo->find($id);
 
-
+            if($job->status == "rejected"){
+                abort(422, 'Job already rejected');
+            }
             // 1️⃣ Refund user from SUPER ADMIN wallet
             $this->walletService->transfer(
                 $superAdmin,
