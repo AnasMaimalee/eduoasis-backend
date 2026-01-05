@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\Service\JambResult\JambResultController;
 use App\Http\Controllers\Api\Service\JambAdmissionLetter\JambAdmissionLetterController;
 use App\Http\Controllers\Api\Service\JambUploadStatus\JambUploadStatusController;
 use App\Http\Controllers\Api\Service\JambAdmissionStatus\JambAdmissionStatusController;
+use App\Http\Controllers\Api\Service\JambAdmissionResultNotification\JambAdmissionResultNotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -240,6 +241,60 @@ Route::middleware('auth:api')->group(function () {
 
         // View all jobs
         Route::get('/all', [JambAdmissionStatusController::class, 'all'])
+            ->middleware('role:superadmin');
+    });
+});
+
+
+Route::middleware('auth:api')->group(function () {
+
+    Route::prefix('services/jamb-admission-result-notification')->group(function () {
+
+        /**
+         * =================
+         * USER
+         * =================
+         */
+        // Submit request
+        Route::post('/', [JambAdmissionResultNotificationController::class, 'store']);
+
+        // User's own requests
+        Route::get('/my', [JambAdmissionResultNotificationController::class, 'my']);
+        Route::get('/administrator', [JambAdmissionResultNotificationController::class, 'processedByAdmin'])
+            ->middleware('role:administrator');
+
+        /**
+         * =================
+         * ADMIN
+         * =================
+         */
+        // View pending jobs
+        Route::get('/pending', [JambAdmissionResultNotificationController::class, 'pending'])
+            ->middleware('role:administrator');
+
+        // Take job
+        Route::post('/{id}/take', [JambAdmissionResultNotificationController::class, 'take'])
+            ->middleware('role:administrator');
+
+        // Complete job (upload letter)
+        Route::post('/{id}/complete', [JambAdmissionResultNotificationController::class, 'complete'])
+            ->middleware('role:administrator');
+
+        /**
+         * =================
+         * SUPER ADMIN
+         * =================
+         */
+        // Approve job
+        Route::post('/{id}/approve', [JambAdmissionResultNotificationController::class, 'approve'])
+            ->middleware('role:superadmin');
+
+        // Reject job
+        Route::post('/{id}/reject', [JambAdmissionResultNotificationController::class, 'reject'])
+            ->middleware('role:superadmin');
+
+        // View all jobs
+        Route::get('/all', [JambAdmissionResultNotificationController::class, 'all'])
             ->middleware('role:superadmin');
     });
 });

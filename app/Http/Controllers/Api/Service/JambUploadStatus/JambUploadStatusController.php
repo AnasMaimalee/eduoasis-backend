@@ -38,15 +38,14 @@ class JambUploadStatusController extends Controller
         $jobs = JambUploadStatusRequest::with([
             'user',
             'service',
-            'completedBy.roles', // ✅ FIXED
+            'completedBy.roles',
         ])
             ->where('completed_by', $admin->id)
-            ->where('status', 'completed')
-            ->latest()
+            ->orderByDesc('updated_at')
             ->get();
 
         return response()->json([
-            'message' => 'Jobs processed by administrator',
+            'message' => 'Jobs processed by logged-in administrator',
             'data' => $jobs->map(function ($job) {
                 return [
                     'id' => $job->id,
@@ -59,7 +58,6 @@ class JambUploadStatusController extends Controller
 
                     'service' => $job->service->name,
 
-                    // ✅ Completed admin details + role
                     'completed_by' => [
                         'id'   => $job->completedBy->id,
                         'name' => $job->completedBy->name,

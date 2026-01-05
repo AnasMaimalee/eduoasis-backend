@@ -39,14 +39,14 @@ class JambAdmissionStatusController extends Controller
         $jobs = JambAdmissionStatusRequest::with([
             'user',
             'service',
-            'completedBy.roles', // ✅ FIXED
+            'completedBy.roles',
         ])
             ->where('completed_by', $admin->id)
-            ->where('status', 'completed')
+            ->orderByDesc('updated_at')
             ->get();
 
         return response()->json([
-            'message' => 'Jobs processed by administrator',
+            'message' => 'Jobs processed by logged-in administrator',
             'data' => $jobs->map(function ($job) {
                 return [
                     'id' => $job->id,
@@ -59,7 +59,6 @@ class JambAdmissionStatusController extends Controller
 
                     'service' => $job->service->name,
 
-                    // ✅ Completed admin details + role
                     'completed_by' => [
                         'id'   => $job->completedBy->id,
                         'name' => $job->completedBy->name,
@@ -75,6 +74,7 @@ class JambAdmissionStatusController extends Controller
             }),
         ]);
     }
+
 
     // User submits request
     public function store(Request $request)

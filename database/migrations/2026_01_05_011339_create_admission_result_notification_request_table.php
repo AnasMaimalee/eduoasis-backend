@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('jamb_admission_letter_requests', function (Blueprint $table) {
+        Schema::create('jamb_admission_result_notification_requests', function (Blueprint $table) {
             $table->uuid('id')->primary();
 
             $table->uuid('user_id');
@@ -42,7 +42,7 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::dropIfExists('jamb_admission_letter_requests');
+        Schema::dropIfExists('jamb_admission_result_notification_requests');
     }
 };
 

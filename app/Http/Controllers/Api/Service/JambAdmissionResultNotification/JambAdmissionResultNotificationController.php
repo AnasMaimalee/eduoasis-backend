@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Http\Controllers\Api\Service\JambAdmissionLetter;
+namespace App\Http\Controllers\Api\Service\JambAdmissionResultNotification;
 
 use App\Http\Controllers\Controller;
-use App\Models\JambAdmissionLetterRequest;
+use App\Http\Resources\JambAdmissionResultNotificationRequestResource;
+use App\Models\JambAdmissionResultNotificationRequest;
 use Illuminate\Http\Request;
-use App\Services\JambAdmissionLetter\JambAdmissionLetterService;
-use App\Http\Resources\JambAdmissionLetterRequestResource;
+use App\Services\JambAdmissionResultNotification\JambAdmissionResultNotificationService;
 
-class JambAdmissionLetterController extends Controller
+class JambAdmissionResultNotificationController extends Controller
 {
     public function __construct(
-        protected JambAdmissionLetterService $service
+        protected JambAdmissionResultNotificationService $service
     ) {}
 
     /**
@@ -36,7 +36,7 @@ class JambAdmissionLetterController extends Controller
             abort(403, 'Only administrators can view processed jobs');
         }
 
-        $jobs = JambAdmissionLetterRequest::with([
+        $jobs = JambAdmissionResultNotificationRequest::with([
             'user',
             'service',
             'completedBy.roles',
@@ -110,7 +110,7 @@ class JambAdmissionLetterController extends Controller
     // Only unassigned jobs
     public function pending()
     {
-        return JambAdmissionLetterRequestResource::collection(
+        return JambAdmissionResultNotificationRequestResource::collection(
             $this->service->pending()
         );
     }
