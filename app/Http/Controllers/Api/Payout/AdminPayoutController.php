@@ -10,6 +10,24 @@ use Illuminate\Http\Request;
 
 class AdminPayoutController extends Controller
 {
+    public function listRequests(Request $request): JsonResponse
+    {
+        $user = auth()->user();
+
+        $query = PayoutRequest::with('admin') // optional: load admin name/email
+        ->latest();
+
+        if (! $user->hasRole('administrator')) {
+            $query->where('admin_id', $user->id);
+        }
+
+        $payouts = $query->paginate(20);
+
+        return response()->json([
+            'message' => 'Payout requests retrieved successfully',
+            'data' => $payouts,
+        ]);
+    }
     /**
      * Admin requests payout
      */

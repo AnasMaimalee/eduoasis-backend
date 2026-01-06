@@ -5,7 +5,6 @@ use App\Http\Controllers\Api\Auth\MeController;
 use App\Http\Controllers\Api\Wallet\WalletController;
 use App\Http\Controllers\Api\Wallet\PaymentController;
 use App\Http\Controllers\Api\Wallet\ServiceRequestController;
-use App\Http\Controllers\Api\ServiceProc\ServiceProcController;
 use App\Http\Controllers\Api\Service\JambResult\JambResultController;
 use App\Http\Controllers\Api\Service\JambAdmissionLetter\JambAdmissionLetterController;
 use App\Http\Controllers\Api\Service\JambUploadStatus\JambUploadStatusController;
@@ -21,24 +20,46 @@ use App\Http\Controllers\Api\Service\ServicePriceController;
 use App\Http\Controllers\Api\Service\SuperAdminServiceController;
 use App\Http\Controllers\Api\Service\AdminServiceController;
 use App\Http\Controllers\Api\Service\UserServiceController;
-
+use App\Http\Controllers\Api\Payout\BankAccountController;
 
 /*
 |--------------------------------------------------------------------------
-| AUTH
+| Public Auth Routes
 |--------------------------------------------------------------------------
 */
 Route::prefix('auth')->group(function () {
     Route::post('/register', [MeController::class, 'register']);
     Route::post('/login', [MeController::class, 'login']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Paystack Webhook (Public - No Auth)
+|--------------------------------------------------------------------------
+*/
+Route::post('/webhooks/paystack', [PaystackWebhookController::class, 'handle'])
+    ->middleware('paystack.webhook');
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes
+|--------------------------------------------------------------------------
+*/
 Route::middleware('auth:api')->group(function () {
 
-    // USER PROFILE
+    /*
+    |--------------------------------------------------------------------------
+    | User Profile
+    |--------------------------------------------------------------------------
+    */
     Route::get('/me', [MeController::class, 'me']);
     Route::post('/me/create-administrator', [MeController::class, 'createAdministrator']);
 
-    // WALLET
+    /*
+    |--------------------------------------------------------------------------
+    | Wallet
+    |--------------------------------------------------------------------------
+    */
     Route::prefix('wallet')->group(function () {
         Route::get('/', [WalletController::class, 'index']);
         Route::get('/me', [WalletController::class, 'me']);
@@ -47,263 +68,70 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/verify', [PaymentController::class, 'verify']);
     });
 
-
-    // GENERIC SERVICE REQUEST
+    /*
+    |--------------------------------------------------------------------------
+    | Generic Service Request
+    |--------------------------------------------------------------------------
+    */
     Route::post('/service/request', [ServiceRequestController::class, 'request']);
 
-    // JAMB RESULT SERVICE
+    /*
+    |--------------------------------------------------------------------------
+    | JAMB Services (Repeating Pattern)
+    |--------------------------------------------------------------------------
+    */
+    $jambServices = [
+        'jamb-result' => JambResultController::class,
+        'jamb-admission-letter' => JambAdmissionLetterController::class,
+        'jamb-upload-status' => JambUploadStatusController::class,
+        'jamb-admission-status' => JambAdmissionStatusController::class,
+        'jamb-admission-result-notification' => JambAdmissionResultNotificationController::class,
+    ];
+
+    foreach ($jambServices as $prefix => $controller) {
+        Route::prefix("services/{$prefix}")->group(function () use ($controller) {
+
+            // ================= USER =================
+            Route::post('/', [JambResultController::class, 'store']); // Only jamb-result has role:user, others don't — adjust if needed
+            Route::get('/my', [$controller, 'my']);
+            Route::get('/administrator', [$controller, 'processedByAdmin'])
+                ->middleware('role:administrator');
+
+            // ================= ADMIN =================
+            Route::get('/pending', [$controller, 'pending'])
+                ->middleware('role:administrator');
+
+            Route::post('/{id}/take', [$controller, 'take'])
+                ->middleware('role:administrator');
+
+            Route::post('/{id}/complete', [$controller, 'complete'])
+                ->middleware('role:administrator');
+
+            // ================= SUPER ADMIN =================
+            Route::post('/{id}/approve', [$controller, 'approve'])
+                ->middleware('role:superadmin');
+
+            Route::post('/{id}/reject', [$controller, 'reject'])
+                ->middleware('role:superadmin');
+
+            Route::get('/all', [$controller, 'all'])
+                ->middleware('role:superadmin');
+        });
+    }
+
+    // Special case: Only jamb-result has these extra user/admin routes with explicit roles
     Route::prefix('services/jamb-result')->group(function () {
-
-        // ================= USER =================
-        Route::get('/my', [JambResultController::class, 'my'])
-            ->middleware('role:user');
-
+        Route::get('/my', [JambResultController::class, 'my'])->middleware('role:user');
+        Route::post('/', [JambResultController::class, 'store'])->middleware('role:user');
         Route::get('/administrator', [JambResultController::class, 'processedByAdmin'])
             ->middleware('role:administrator');
-
-        Route::post('/', [JambResultController::class, 'store'])
-            ->middleware('role:user');
-
-        // ================= ADMIN =================
-        Route::get('/pending', [JambResultController::class, 'pending'])
-            ->middleware('role:administrator');
-
-        Route::post('/{id}/take', [JambResultController::class, 'take'])
-            ->middleware('role:administrator');
-
-        Route::post('/{jambRequest}/complete', [JambResultController::class, 'complete'])
-            ->middleware('role:administrator');
-
-        // ================= SUPER ADMIN =================
-        Route::post('/{jambRequest}/approve', [JambResultController::class, 'approve'])
-            ->middleware('role:superadmin');
-
-        Route::post('/{jambRequest}/reject', [JambResultController::class, 'reject'])
-            ->middleware('role:superadmin');
-
-        Route::get('/all', [JambResultController::class, 'all'])
-            ->middleware('role:superadmin');
     });
 
-});
-
-
-Route::middleware('auth:api')->group(function () {
-
-    Route::prefix('services/jamb-admission-letter')->group(function () {
-
-        /**
-         * =================
-         * USER
-         * =================
-         */
-        // Submit request
-        Route::post('/', [JambAdmissionLetterController::class, 'store']);
-
-        // User's own requests
-        Route::get('/my', [JambAdmissionLetterController::class, 'my']);
-        Route::get('/administrator', [JambAdmissionLetterController::class, 'processedByAdmin'])
-            ->middleware('role:administrator');
-
-
-        /**
-         * =================
-         * ADMIN
-         * =================
-         */
-        // View pending jobs
-        Route::get('/pending', [JambAdmissionLetterController::class, 'pending'])
-            ->middleware('role:administrator');
-
-        // Take job
-        Route::post('/{id}/take', [JambAdmissionLetterController::class, 'take'])
-            ->middleware('role:administrator');
-
-        // Complete job (upload letter)
-        Route::post('/{id}/complete', [JambAdmissionLetterController::class, 'complete'])
-            ->middleware('role:administrator');
-
-        /**
-         * =================
-         * SUPER ADMIN
-         * =================
-         */
-        // Approve job
-        Route::post('/{id}/approve', [JambAdmissionLetterController::class, 'approve'])
-            ->middleware('role:superadmin');
-
-        // Reject job
-        Route::post('/{id}/reject', [JambAdmissionLetterController::class, 'reject'])
-            ->middleware('role:superadmin');
-
-        // View all jobs
-        Route::get('/all', [JambAdmissionLetterController::class, 'all'])
-            ->middleware('role:superadmin');
-    });
-});
-
-
-Route::middleware('auth:api')->group(function () {
-
-    Route::prefix('services/jamb-upload-status')->group(function () {
-
-        /**
-         * =================
-         * USER
-         * =================
-         */
-        // Submit request
-        Route::post('/', [JambUploadStatusController::class, 'store']);
-
-        // User's own requests
-        Route::get('/my', [JambUploadStatusController::class, 'my']);
-        Route::get('/administrator', [JambUploadStatusController::class, 'processedByAdmin']);
-
-        /**
-         * =================
-         * ADMIN
-         * =================
-         */
-        // View pending jobs
-        Route::get('/pending', [JambUploadStatusController::class, 'pending'])
-            ->middleware('role:administrator');
-
-        // Take job
-        Route::post('/{id}/take', [JambUploadStatusController::class, 'take'])
-            ->middleware('role:administrator');
-
-        // Complete job (upload letter)
-        Route::post('/{id}/complete', [JambUploadStatusController::class, 'complete'])
-            ->middleware('role:administrator');
-
-        /**
-         * =================
-         * SUPER ADMIN
-         * =================
-         */
-        // Approve job
-        Route::post('/{id}/approve', [JambUploadStatusController::class, 'approve'])
-            ->middleware('role:superadmin');
-
-        // Reject job
-        Route::post('/{id}/reject', [JambUploadStatusController::class, 'reject'])
-            ->middleware('role:superadmin');
-
-        // View all jobs
-        Route::get('/all', [JambUploadStatusController::class, 'all'])
-            ->middleware('role:superadmin');
-    });
-});
-
-
-Route::middleware('auth:api')->group(function () {
-
-    Route::prefix('services/jamb-admission-status')->group(function () {
-
-        /**
-         * =================
-         * USER
-         * =================
-         */
-        // Submit request
-        Route::post('/', [JambAdmissionStatusController::class, 'store']);
-
-        // User's own requests
-        Route::get('/my', [JambAdmissionStatusController::class, 'my']);
-        Route::get('/administrator', [JambAdmissionStatusController::class, 'processedByAdmin']);
-
-        /**
-         * =================
-         * ADMIN
-         * =================
-         */
-        // View pending jobs
-        Route::get('/pending', [JambAdmissionStatusController::class, 'pending'])
-            ->middleware('role:administrator');
-
-        // Take job
-        Route::post('/{id}/take', [JambAdmissionStatusController::class, 'take'])
-            ->middleware('role:administrator');
-
-        // Complete job (upload letter)
-        Route::post('/{id}/complete', [JambAdmissionStatusController::class, 'complete'])
-            ->middleware('role:administrator');
-
-        /**
-         * =================
-         * SUPER ADMIN
-         * =================
-         */
-        // Approve job
-        Route::post('/{id}/approve', [JambAdmissionStatusController::class, 'approve'])
-            ->middleware('role:superadmin');
-
-        // Reject job
-        Route::post('/{id}/reject', [JambAdmissionStatusController::class, 'reject'])
-            ->middleware('role:superadmin');
-
-        // View all jobs
-        Route::get('/all', [JambAdmissionStatusController::class, 'all'])
-            ->middleware('role:superadmin');
-    });
-});
-
-
-Route::middleware('auth:api')->group(function () {
-
-    Route::prefix('services/jamb-admission-result-notification')->group(function () {
-
-        /**
-         * =================
-         * USER
-         * =================
-         */
-        // Submit request
-        Route::post('/', [JambAdmissionResultNotificationController::class, 'store']);
-
-        // User's own requests
-        Route::get('/my', [JambAdmissionResultNotificationController::class, 'my']);
-        Route::get('/administrator', [JambAdmissionResultNotificationController::class, 'processedByAdmin'])
-            ->middleware('role:administrator');
-
-        /**
-         * =================
-         * ADMIN
-         * =================
-         */
-        // View pending jobs
-        Route::get('/pending', [JambAdmissionResultNotificationController::class, 'pending'])
-            ->middleware('role:administrator');
-
-        // Take job
-        Route::post('/{id}/take', [JambAdmissionResultNotificationController::class, 'take'])
-            ->middleware('role:administrator');
-
-        // Complete job (upload letter)
-        Route::post('/{id}/complete', [JambAdmissionResultNotificationController::class, 'complete'])
-            ->middleware('role:administrator');
-
-        /**
-         * =================
-         * SUPER ADMIN
-         * =================
-         */
-        // Approve job
-        Route::post('/{id}/approve', [JambAdmissionResultNotificationController::class, 'approve'])
-            ->middleware('role:superadmin');
-
-        // Reject job
-        Route::post('/{id}/reject', [JambAdmissionResultNotificationController::class, 'reject'])
-            ->middleware('role:superadmin');
-
-        // View all jobs
-        Route::get('/all', [JambAdmissionResultNotificationController::class, 'all'])
-            ->middleware('role:superadmin');
-    });
-});
-
-Route::middleware(['auth:api'])->group(function () {
-
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboards
+    |--------------------------------------------------------------------------
+    */
     Route::get('/dashboard/user', [UserDashboardController::class, 'index']);
 
     Route::middleware('role:administrator')->group(function () {
@@ -314,46 +142,53 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('/dashboard/superadmin', [SuperAdminDashboardController::class, 'index']);
     });
 
-});
+    /*
+    |--------------------------------------------------------------------------
+    | Services Listing & Pricing (Role-based)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/services', [UserServiceController::class, 'index']);
 
+    Route::middleware('role:administrator')->get('/admin/services', [AdminServiceController::class, 'index']);
 
-Route::middleware(['auth:api', 'role:superadmin'])->group(function () {
-    Route::get('/services/list', [ServicePriceController::class, 'list']);
-    Route::put('/services/{serviceId}/update-prices', [ServicePriceController::class, 'update']);
-});
-
-Route::middleware(['auth:api'])->group(function () {
-
-    // 🔐 Admin / Superadmin
     Route::middleware('role:superadmin')->group(function () {
         Route::get('/superadmin/services', [SuperAdminServiceController::class, 'index']);
+        Route::get('/services/list', [ServicePriceController::class, 'list']);
+        Route::put('/services/{serviceId}/update-prices', [ServicePriceController::class, 'update']);
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | Payouts & Bank Accounts
+    |--------------------------------------------------------------------------
+    */
+    // Admin payout request
     Route::middleware('role:administrator')->group(function () {
-        Route::get('/admin/services', [AdminServiceController::class, 'index']);
+        Route::post('/admin/payout/request', [AdminPayoutController::class, 'requestPayout']);
+        Route::post('/wallet/payout/request', [AdminPayoutController::class, 'requestPayout']);
     });
 
-    // 👤 User
-    Route::get('/services', [UserServiceController::class, 'index']);
-});
+    // Superadmin payout approval
+    Route::middleware('role:superadmin')->post('/superadmin/payout/{payout}/approve', [AdminPayoutController::class, 'approvePayout']);
 
+    // Bank account management + payout (using sanctum? – kept as-is but grouped cleanly)
+    Route::middleware('auth:api')->prefix('admin/payout')->group(function () {
+        Route::get('bank', [BankAccountController::class, 'show'])
+            ->middleware('role:administrator');
+        Route::post('bank', [BankAccountController::class, 'storeOrUpdate'])
+            ->middleware('role:administrator');
+        Route::get('/request', [AdminPayoutController::class, 'listRequests'])
+            ->middleware('role:administrator');
+        Route::post('request', [AdminPayoutController::class, 'requestPayout'])
+            ->middleware('role:administrator');
+        Route::post('approve/{payout}', [AdminPayoutController::class, 'approvePayout'])
+            ->middleware('role:superadmin');
+    });
 
-Route::middleware('auth:api')->group(function () {
-
-    // 🧑‍💼 ADMIN
-    Route::post('/admin/payout/request', [AdminPayoutController::class, 'requestPayout']);
-
-    // 👑 SUPER ADMIN
-    Route::post('/superadmin/payout/{payout}/approve', [AdminPayoutController::class, 'approvePayout'])
-        ->middleware('role:superadmin');
-
-    // 🧪 TEST ROUTE (DEV ONLY)
+    /*
+    |--------------------------------------------------------------------------
+    | Test Route (Development Only)
+    |--------------------------------------------------------------------------
+    */
     Route::post('/test/payout/factory', [PayoutTestController::class, 'seed']);
 });
-
-
-
-Route::post('/webhooks/paystack', [PaystackWebhookController::class, 'handle'])
-    ->middleware('paystack.webhook');
-
-

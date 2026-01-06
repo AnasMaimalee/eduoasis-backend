@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('account_name');
             $table->string('account_number');
             $table->string('bank_code');
+            $table->string('recipient_code')->nullable();
+            $table->timestamp('recipient_verified_at')->nullable();
             $table->timestamps();
         });
 

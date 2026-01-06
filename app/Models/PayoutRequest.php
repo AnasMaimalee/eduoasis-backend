@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-
+use App\Enums\PayoutStatus;
 class PayoutRequest extends Model
 {
     use HasFactory, HasUuids;
@@ -21,9 +21,9 @@ class PayoutRequest extends Model
     ];
 
     protected $casts = [
-        'amount'           => 'decimal:2',
-        'balance_snapshot' => 'decimal:2',
-        'approved_at'      => 'datetime',
+        'status' => PayoutStatus::class,
+        'approved_at' => 'datetime',
+        'paid_at' => 'datetime',
     ];
 
     /* =======================

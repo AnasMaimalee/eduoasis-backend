@@ -98,7 +98,18 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->roles->first()?->name;
     }
+    public function bankAccount()
+    {
+        return $this->hasOne(BankAccount::class);
+    }
 
+    /**
+     * Get all payout requests for the admin/user
+     */
+    public function payoutRequests()
+    {
+        return $this->hasMany(PayoutRequest::class, 'admin_id');
+    }
 
 
 
