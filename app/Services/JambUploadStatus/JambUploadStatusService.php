@@ -4,13 +4,14 @@ namespace App\Services\JambUploadStatus;
 
 use App\Mail\JambUploadStatusCompletedMail;
 use App\Mail\JambUploadStatusRejectedMail;
+use App\Mail\WalletDebited;
 use App\Models\User;
 use App\Models\Service;
-use App\Repositories\JambUploadStatus\JambUploadStatusRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use App\Repositories\JambUploadStatus\JambUploadStatusRepository;
 use App\Services\WalletService;
-use App\Mail\WalletDebited;
 
 class JambUploadStatusService
 {
@@ -33,10 +34,10 @@ class JambUploadStatusService
     public function submit(User $user, array $data)
     {
         $service = Service::where('active', true)
-            ->whereRaw('LOWER(name) = ?', ['jamb admission letter'])
+            ->whereRaw('LOWER(name) = ?', [strtolower('JAMB Upload Status')])
             ->firstOrFail();
 
-        // 🔒 Balance check
+        // Balance check
         if ($user->wallet->balance < $service->customer_price) {
             abort(422, 'Insufficient wallet balance');
         }
@@ -47,24 +48,34 @@ class JambUploadStatusService
             abort(500, 'Super admin not configured');
         }
 
-        return DB::transaction(function () use ($user, $data, $service, $superAdmin) {
+        // Unique group reference
+        $groupReference = 'jamb_upload_status_' . Str::uuid();
 
-            // 1️⃣ Debit USER wallet
-            $this->walletService->debit(
+        // Capture debit transaction for email
+        $debitTransaction = null;
+        $createdRequest = null;
+
+        $createdRequest = DB::transaction(function () use (
+            $user, $data, $service, $superAdmin, $groupReference, &$debitTransaction
+        ) {
+            // 1. Debit user wallet
+            $debitTransaction = $this->walletService->debitUser(
                 $user,
                 $service->customer_price,
-                'JAMB Upload Status request'
+                'Purchase: JAMB Upload Status Check',
+                $groupReference
             );
 
-            // 2️⃣ Credit SUPER ADMIN wallet
-            $this->walletService->credit(
+            // 2. Credit platform (superadmin)
+            $this->walletService->creditUser(
                 $superAdmin,
                 $service->customer_price,
-                'JAMB Upload Status payment received'
+                'Payment received: JAMB Upload Status (User: ' . $user->name . ')',
+                $groupReference
             );
 
-            // 2️⃣ Create request
-            $request = $this->repo->create([
+            // 3. Create request with platform_profit
+            return $this->repo->create([
                 'user_id'             => $user->id,
                 'service_id'          => $service->id,
                 'email'               => $data['email'],
@@ -77,9 +88,19 @@ class JambUploadStatusService
                 'status'              => 'pending',
                 'is_paid'             => false,
             ]);
-
-            return $request;
         });
+
+        // Send debit email to user
+        Mail::to($user->email)->send(
+            new WalletDebited(
+                user: $user,
+                amount: $service->customer_price,
+                balance: $debitTransaction->balance_after,
+                reason: 'Purchase: JAMB Upload Status Check'
+            )
+        );
+
+        return $createdRequest;
     }
 
     /**
@@ -93,6 +114,7 @@ class JambUploadStatusService
         if (! auth()->user()->hasRole('administrator')) {
             abort(403, 'Unauthorized action');
         }
+
         return $this->repo->pending();
     }
 
@@ -101,10 +123,11 @@ class JambUploadStatusService
         if (! auth()->user()->hasRole('administrator')) {
             abort(403, 'Unauthorized action');
         }
+
         $job = $this->repo->find($id);
 
         if ($job->status !== 'pending') {
-            abort(422, 'Job already taken');
+            abort(422, 'Job is no longer available');
         }
 
         $job->update([
@@ -120,53 +143,47 @@ class JambUploadStatusService
         if (! auth()->user()->hasRole('administrator')) {
             abort(403, 'Unauthorized action');
         }
-        return DB::transaction(function () use ($id, $filePath, $admin) {
 
+        return DB::transaction(function () use ($id, $filePath, $admin) {
             $job = $this->repo->find($id);
 
-            // Ensure the job is assigned to this admin
             if ($job->taken_by !== $admin->id) {
                 abort(403, 'You did not take this job');
             }
 
-            // Only allow completing jobs that are in processing state
             if ($job->status !== 'processing') {
-                abort(422, 'Invalid job state');
+                abort(422, 'Job is not in processing state');
             }
 
-            // Update the job as completed
             $job->update([
-                'status'       => 'completed', // marks as completed by admin, awaiting approval
+                'status'       => 'completed_by_admin',
                 'result_file'  => $filePath,
                 'completed_by' => $admin->id,
             ]);
 
-            // Load relations for response
             $job->load(['user', 'service', 'completedBy']);
 
-            // Send email notification to user
-            Mail::to($job->user->email)->send(
+            Mail::to($job->email)->send(
                 new JambUploadStatusCompletedMail($job)
             );
 
             return [
-                'message' => 'Job completed and awaiting approval',
+                'message' => 'Job completed and awaiting superadmin approval',
                 'job' => [
-                    'id' => $job->id,
-                    'status' => $job->status,
-                    'user' => [
-                        'name' => $job->user->name,
+                    'id'               => $job->id,
+                    'status'           => $job->status,
+                    'user'             => [
+                        'name'  => $job->user->name,
                         'email' => $job->user->email,
                     ],
-                    'service' => $job->service->name,
-                    'completed_by' => $job->completedBy->name, // Administrator
-                    'result_file_url' => $job->result_file ? asset('storage/' . $job->result_file) : null,
-                    'created_at' => $job->created_at,
+                    'service'          => $job->service->name,
+                    'completed_by'     => $job->completedBy->name,
+                    'result_file_url'  => asset('storage/' . $job->result_file),
+                    'created_at'       => $job->created_at,
                 ],
             ];
         });
     }
-
 
     /**
      * ======================
@@ -176,63 +193,46 @@ class JambUploadStatusService
 
     public function approve(string $id, User $superAdmin)
     {
-
         if (! auth()->user()->hasRole('superadmin')) {
             abort(403, 'Unauthorized financial action');
         }
 
         return DB::transaction(function () use ($id, $superAdmin) {
-
             $job = $this->repo->find($id);
 
-            if ($job->status !== 'completed') {
-                abort(422, 'Job is not awaiting approval');
+            if ($job->status !== 'completed_by_admin') {
+                abort(422, 'Job is not ready for approval');
             }
-            if($job->status == "approved"){
+
+            if ($job->status === 'approved') {
                 abort(422, 'Job already approved');
             }
+
             if (!$job->completedBy) {
-                abort(422, 'Completed by Administrator not found');
+                abort(422, 'Administrator who completed the job not found');
             }
 
-            // Pay admin
-            $this->walletService->credit(
-                $job->completedBy, // Administrator
+            // Pay the admin
+            $this->walletService->creditUser(
+                $job->completedBy,
                 $job->admin_payout,
-                'JAMB Admission Letter service payment'
+                'Payment for JAMB Upload Status service (Request #' . $job->id . ')'
             );
 
-            // Update job
             $job->update([
                 'status'          => 'approved',
                 'approved_by'     => $superAdmin->id,
                 'platform_profit' => $job->customer_price - $job->admin_payout,
-                'is_paid'         => true, // mark payout as done
             ]);
 
-            $job->load(['user', 'service', 'completedBy', 'approvedBy']);
-
             return [
-                'message' => 'Job approved and admin paid successfully',
-                'job' => [
-                    'id' => $job->id,
-                    'status' => $job->status,
-                    'user' => [
-                        'name' => $job->user->name,
-                        'email' => $job->user->email,
-                    ],
-                    'service' => $job->service->name,
-                    'completed_by' => $job->completedBy->name, // Administrator
-                    'approved_by' => $job->approvedBy->name,   // Super Admin
-                    'admin_paid' => $job->admin_payout,
-                    'platform_profit' => $job->platform_profit,
-                    'result_file_url' => $job->result_file ? asset('storage/' . $job->result_file) : null,
-                    'created_at' => $job->created_at,
-                ],
+                'message'         => 'Job approved and administrator paid successfully',
+                'job_id'          => $job->id,
+                'admin_paid'      => $job->admin_payout,
+                'platform_profit' => $job->platform_profit,
             ];
         });
     }
-
 
     public function reject(string $id, string $reason, User $superAdmin)
     {
@@ -241,16 +241,22 @@ class JambUploadStatusService
         }
 
         return DB::transaction(function () use ($id, $reason, $superAdmin) {
-
             $job = $this->repo->find($id);
-            if($job->status == "rejected"){
+
+            if ($job->status === 'rejected') {
                 abort(422, 'Job already rejected');
             }
+
+            if (!in_array($job->status, ['completed_by_admin', 'processing'])) {
+                abort(422, 'Job cannot be rejected at this stage');
+            }
+
+            // Refund user
             $this->walletService->transfer(
                 $superAdmin,
                 $job->user,
                 $job->customer_price,
-                'Refund for rejected Admission Letter request'
+                'Refund: Rejected JAMB Upload Status request (Reason: ' . $reason . ')'
             );
 
             $job->update([
@@ -263,11 +269,17 @@ class JambUploadStatusService
                 new JambUploadStatusRejectedMail($job)
             );
 
+            if ($job->completedBy) {
+                Mail::to($job->completedBy->email)->send(
+                    new JambUploadStatusRejectedMail($job)
+                );
+            }
+
             return [
-                'message' => 'Job rejected and user refunded',
-                'job_id' => $job->id,
+                'message'       => 'Job rejected and user fully refunded',
+                'job_id'        => $job->id,
                 'refund_amount' => $job->customer_price,
-                'reason' => $reason,
+                'reason'        => $reason,
             ];
         });
     }
@@ -277,6 +289,7 @@ class JambUploadStatusService
         if (! auth()->user()->hasRole('superadmin')) {
             abort(403, 'Unauthorized action');
         }
+
         return $this->repo->allWithRelations();
     }
 }

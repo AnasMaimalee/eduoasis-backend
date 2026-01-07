@@ -45,7 +45,7 @@ class WalletService
     }
 
     /* ===============================
-        LEDGER (NO EMAILS HERE ❌)
+        LOW-LEVEL LEDGER (PROTECTED)
     ================================ */
 
     protected function credit(
@@ -105,13 +105,75 @@ class WalletService
     }
 
     /* ===============================
-        ADMIN OPERATIONS (EMAILS ✅)
+        PUBLIC METHODS (SAFE TO USE FROM OTHER SERVICES)
     ================================ */
+
+    /**
+     * Credit a user's wallet
+     */
+    public function creditUser(
+        User $user,
+        float $amount,
+        string $description,
+        string $groupReference = null
+    ): WalletTransaction {
+        return $this->credit(
+            $user,
+            $amount,
+            $description,
+            $groupReference ?? $this->reference()
+        );
+    }
+
+    /**
+     * Debit a user's wallet
+     */
+    public function debitUser(
+        User $user,
+        float $amount,
+        string $description,
+        string $groupReference = null
+    ): WalletTransaction {
+        return $this->debit(
+            $user,
+            $amount,
+            $description,
+            $groupReference ?? $this->reference()
+        );
+    }
+
+    /**
+     * Transfer money from one user to another (e.g., refunds, payouts)
+     */
+    public function transfer(
+        User $from,
+        User $to,
+        float $amount,
+        string $description,
+        string $groupReference = null
+    ): array {
+        $groupRef = $groupReference ?? $this->reference();
+
+        return DB::transaction(function () use ($from, $to, $amount, $description, $groupRef) {
+            $debitTx = $this->debit($from, $amount, $description, $groupRef);
+            $creditTx = $this->credit($to, $amount, $description, $groupRef);
+
+            return [
+                'debit_transaction'  => $debitTx,
+                'credit_transaction' => $creditTx,
+            ];
+        });
+    }
+
+    /* ===============================
+        ADMIN OPERATIONS (WITH EMAILS)
+    ================================ */
+
     public function adminCreditUser(
         User $admin,
         User $user,
         float $amount,
-        string $reason // <-- collected from form
+        string $reason
     ): void {
         $this->ensureSuperAdmin($admin);
 
@@ -121,37 +183,21 @@ class WalletService
         $creditTx = null;
 
         DB::transaction(function () use ($superAdmin, $user, $amount, $reason, $ref, &$creditTx) {
-            // Super admin pays
-            $this->debit(
-                $superAdmin,
-                $amount,
-                "Admin funding user ({$user->email}): {$reason}",
-                $ref
-            );
-
-            // User receives
-            $creditTx = $this->credit(
-                $user,
-                $amount,
-                "Wallet funded by admin: {$reason}",
-                $ref
-            );
+            $this->debitUser($superAdmin, $amount, "Admin funding user ({$user->email}): {$reason}", $ref);
+            $creditTx = $this->creditUser($user, $amount, "Wallet funded by admin: {$reason}", $ref);
         });
 
-        // ✅ Send email using actual transaction data
         if ($creditTx) {
             Mail::to($user->email)->send(
                 new WalletCredited(
                     $user,
                     $amount,
-                    $creditTx->balance_after, // accurate updated balance
-                    $reason // <-- dynamic from form
+                    $creditTx->balance_after,
+                    $reason
                 )
             );
         }
     }
-
-
 
     public function adminDebitUser(
         User $admin,
@@ -164,35 +210,21 @@ class WalletService
         $superAdmin = $this->getSuperAdmin();
         $ref = $this->reference();
 
-        DB::transaction(function () use ($superAdmin, $user, $amount, $reason, $ref) {
+        $debitTx = null;
 
-            // User pays
-            $debitTx = $this->debit(
+        DB::transaction(function () use ($superAdmin, $user, $amount, $reason, $ref, &$debitTx) {
+            $debitTx = $this->debitUser($user, $amount, "Admin debit: {$reason}", $ref);
+            $this->creditUser($superAdmin, $amount, "Collected from user ({$user->email}): {$reason}", $ref);
+        });
+
+        Mail::to($user->email)->send(
+            new WalletDebited(
                 $user,
                 $amount,
-                "Admin debit: {$reason}",
-                $ref
-            );
-
-            // Super admin receives
-            $this->credit(
-                $superAdmin,
-                $amount,
-                "Collected from user ({$user->email}): {$reason}",
-                $ref
-            );
-
-            // ✅ EMAIL (FIXED — 4 ARGUMENTS)
-            Mail::to($user->email)->send(
-                new WalletDebited(
-                    $user,
-                    $amount,
-                    $debitTx->balance_after,
-                    $reason
-                )
-            );
-
-        });
+                $debitTx->balance_after,
+                $reason
+            )
+        );
     }
 
     /* ===============================
@@ -205,9 +237,26 @@ class WalletService
 
         return [
             'current_balance' => $wallet->balance,
-            'transactions' => $wallet->transactions()
+            'transactions'    => $wallet->transactions()
                 ->latest()
                 ->paginate($perPage)
         ];
+    }
+
+    /**
+     * Credit user wallet without sending email (for seeding, testing, migrations)
+     */
+    public function creditUserQuietly(
+        User $user,
+        float $amount,
+        string $description,
+        string $groupReference = null
+    ): WalletTransaction {
+        return $this->credit(
+            $user,
+            $amount,
+            $description,
+            $groupReference ?? $this->reference()
+        );
     }
 }
