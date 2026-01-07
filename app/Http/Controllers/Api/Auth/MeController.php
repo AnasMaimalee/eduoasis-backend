@@ -72,6 +72,31 @@ class MeController extends Controller
         ]);
     }
 
+    /**
+     * Logout user (invalidate JWT token)
+     */
+    public function logout(Request $request)
+    {
+        $user = auth()->user();
+
+        if ($user) {
+            try {
+                JWTAuth::invalidate(JWTAuth::getToken());
+            } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
+                return response()->json([
+                    'message' => 'Failed to logout, please try again.'
+                ], 500);
+            }
+
+            return response()->json([
+                'message' => 'User logged out successfully'
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'No user logged in'
+        ], 401);
+    }
     public function updatePassword(Request $request)
     {
         $request->validate([

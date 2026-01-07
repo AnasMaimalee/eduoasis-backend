@@ -40,6 +40,7 @@ Route::prefix('auth')->group(function () {
 Route::post('forgot-password', [PasswordResetController::class, 'forgot']);
 Route::post('reset-password', [PasswordResetController::class, 'reset']);
 Route::middleware('auth:api')->post('/update-password', [MeController::class, 'updatePassword']);
+Route::middleware('auth:api')->post('logout', [MeController::class, 'logout']);
 
 // Email Verification
 Route::get('verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])
