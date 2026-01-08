@@ -200,7 +200,7 @@ class JambUploadStatusService
         return DB::transaction(function () use ($id, $superAdmin) {
             $job = $this->repo->find($id);
 
-            if ($job->status !== 'completed_by_admin') {
+            if ($job->status !== 'completed') {
                 abort(422, 'Job is not ready for approval');
             }
 
@@ -212,27 +212,31 @@ class JambUploadStatusService
                 abort(422, 'Administrator who completed the job not found');
             }
 
-            // Pay the admin
-            $this->walletService->creditUser(
-                $job->completedBy,
-                $job->admin_payout,
+            // ✅ FIXED: DEBIT SUPERADMIN WALLET → CREDIT ADMIN
+            $this->walletService->adminCreditUser(
+                $superAdmin,                          // Superadmin (verification ONLY)
+                $job->completedBy,                   // Admin who gets PAID
+                $job->admin_payout,                  // PAYOUT AMOUNT
                 'Payment for JAMB Upload Status service (Request #' . $job->id . ')'
             );
 
             $job->update([
                 'status'          => 'approved',
                 'approved_by'     => $superAdmin->id,
+                'is_paid'         => true,
                 'platform_profit' => $job->customer_price - $job->admin_payout,
             ]);
 
             return [
-                'message'         => 'Job approved and administrator paid successfully',
+                'message'         => 'Job approved and administrator paid from superadmin wallet',
                 'job_id'          => $job->id,
                 'admin_paid'      => $job->admin_payout,
                 'platform_profit' => $job->platform_profit,
+                'wallet_flow'     => 'SuperAdmin → Admin'
             ];
         });
     }
+
 
     public function reject(string $id, string $reason, User $superAdmin)
     {
@@ -247,7 +251,7 @@ class JambUploadStatusService
                 abort(422, 'Job already rejected');
             }
 
-            if (!in_array($job->status, ['completed_by_admin', 'processing'])) {
+            if (!in_array($job->status, ['completed', 'processing'])) {
                 abort(422, 'Job cannot be rejected at this stage');
             }
 

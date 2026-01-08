@@ -216,7 +216,7 @@ Route::middleware('auth:api')->group(function () {
 /*
  * downlaoding files
  * */
-// JAMB PDF DOWNLOAD - PERFECT
+// ✅ UNIVERSAL FILE DOWNLOAD (PDF + IMAGES)
 Route::get('/storage/{path}', function (string $path) {
     $filePath = storage_path('app/public/' . $path);
 
@@ -224,9 +224,28 @@ Route::get('/storage/{path}', function (string $path) {
         abort(404, 'File not found');
     }
 
+    // ✅ MIME TYPE DETECTION
+    $mimeTypes = [
+        'pdf' => 'application/pdf',
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+    ];
+
+    $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+    $contentType = $mimeTypes[$extension] ?? 'application/octet-stream';
+
+    // ✅ DYNAMIC FILENAME
+    $originalName = basename($filePath);
+    $filename = $originalName;
+
     return response()->file($filePath, [
-        'Content-Type' => 'application/pdf',
-        'Content-Disposition' => 'attachment; filename="jamb-service.pdf"',
+        'Content-Type' => $contentType,
+        'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        'Content-Length' => filesize($filePath),
         'Cache-Control' => 'public, max-age=3600',
+        'Last-Modified' => filemtime($filePath),
     ]);
 })->where('path', '.*');

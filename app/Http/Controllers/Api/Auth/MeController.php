@@ -253,13 +253,12 @@ class MeController extends Controller
                 ['name' => 'Manage Users', 'route' => '/superadmin/users', 'icon' => 'UserOutlined'],
                 ['name' => 'Manage Administrators', 'route' => '/superadmin/administrators', 'icon' => 'UserSwitchOutlined'],
                 ['name' => 'Manage Services', 'route' => '/superadmin/services', 'icon' => 'AppstoreAddOutlined'],
-                ['name' => 'Pricing', 'route' => '/superadmin/pricing', 'icon' => 'DollarOutlined'],
 
                 // JAMB Services for Superadmin (different routes)
                 ['name' => 'JAMB Original Result', 'route' => '/superadmin/services/jamb-result', 'icon' => 'AppstoreOutlined'],
                 ['name' => 'JAMB Admission Letter', 'route' => '/superadmin/services/admission-letter', 'icon' => 'FileTextOutlined'],
                 ['name' => 'JAMB Olevel Status', 'route' => '/superadmin/services/olevel-status', 'icon' => 'ProfileOutlined'],
-                ['name' => 'Admission Letter Checking', 'route' => '/superadmin/services/check-admission', 'icon' => 'CheckCircleOutlined'],
+                ['name' => 'Admission Checking Status', 'route' => '/superadmin/services/check-admission', 'icon' => 'CheckCircleOutlined'],
                 ['name' => 'JAMB Result Notification', 'route' => '/superadmin/services/result-notification', 'icon' => 'NotificationOutlined'],
 
                 // Superadmin specific JAMB requests

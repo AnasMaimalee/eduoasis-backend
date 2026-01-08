@@ -31,7 +31,7 @@ return new class extends Migration
             $table->enum('status', [
                 'pending',              // user submitted
                 'processing',           // admin took job
-                'completed_by_admin',   // admin uploaded result
+                'completed',   // admin uploaded result
                 'approved',             // super admin approved
                 'rejected',             // super admin rejected
             ])->default('pending');

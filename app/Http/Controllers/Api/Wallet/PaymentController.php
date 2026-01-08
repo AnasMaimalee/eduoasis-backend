@@ -73,7 +73,7 @@ class PaymentController extends Controller
         $amount = $data['amount'] / 100; // convert from kobo
         $user = auth()->user();
 
-        $walletService->credit(
+        $walletService->creditUser(
             $user,
             $amount,
             $reference,

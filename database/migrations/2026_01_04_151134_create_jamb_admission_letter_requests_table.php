@@ -22,7 +22,7 @@ return new class extends Migration {
             $table->decimal('admin_payout', 10, 2);
             $table->decimal('platform_profit', 10, 2);
 
-            $table->enum('status', ['pending', 'taken', 'completed', 'processing', 'approved', 'rejected', 'completed_by_admin'])
+            $table->enum('status', ['pending', 'taken', 'completed', 'processing', 'approved', 'rejected', 'completed'])
                 ->default('pending');
 
             $table->boolean('is_paid')->default(false);

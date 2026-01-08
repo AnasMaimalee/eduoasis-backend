@@ -183,10 +183,14 @@ class WalletService
         $creditTx = null;
 
         DB::transaction(function () use ($superAdmin, $user, $amount, $reason, $ref, &$creditTx) {
-            $this->debitUser($superAdmin, $amount, "Admin funding user ({$user->email}): {$reason}", $ref);
+            // ✅ DEBIT SUPERADMIN WALLET FIRST
+            $this->debitUser($superAdmin, $amount, "Funding user ({$user->email}): {$reason}", $ref);
+
+            // ✅ CREDIT USER WALLET
             $creditTx = $this->creditUser($user, $amount, "Wallet funded by admin: {$reason}", $ref);
         });
 
+        // ✅ SEND NOTIFICATION TO USER
         if ($creditTx) {
             Mail::to($user->email)->send(
                 new WalletCredited(
@@ -198,6 +202,7 @@ class WalletService
             );
         }
     }
+
 
     public function adminDebitUser(
         User $admin,
