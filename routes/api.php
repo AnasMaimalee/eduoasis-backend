@@ -75,7 +75,7 @@ Route::middleware('auth:api')->group(function () {
     /* |--------------------------------------------------------------------------
      | User Profile
      |-------------------------------------------------------------------------- */
-    Route::get('/me', [MeController::class, 'me']);
+    Route::get('/me', [MeController::class, 'me'])->middleware('role:administrator,superadmin,user');
     Route::post('/me/create-administrator', [MeController::class, 'createAdministrator']);
 
     /* |--------------------------------------------------------------------------
@@ -100,7 +100,7 @@ Route::middleware('auth:api')->group(function () {
     /* |--------------------------------------------------------------------------
      | Wallet
      |-------------------------------------------------------------------------- */
-    Route::prefix('wallet')->group(function () {
+    Route::prefix('wallet')->middleware('auth:api')->group(function () {
         Route::get('/', [WalletController::class, 'index']);
         Route::get('/me', [WalletController::class, 'me']);
         Route::get('/transactions', [WalletController::class, 'transactions']);
@@ -189,7 +189,9 @@ Route::middleware('auth:api')->group(function () {
 
         Route::middleware('role:superadmin')->group(function () {
             Route::get('/request', [AdminPayoutController::class, 'listRequests']);
-            Route::post('approve/{payout}', [AdminPayoutController::class, 'approvePayout']);
+            Route::post('/{payout}/approve', [AdminPayoutController::class, 'approvePayout']);
+            Route::post('/{payout}/reject', [AdminPayoutController::class, 'rejectPayout']);
+
         });
     });
 

@@ -115,7 +115,7 @@ class AdminPayoutService
              * 2️⃣ INITIATE PAYSTACK TRANSFER
              */
             $transferResponse = $this->paystack->initiateTransfer([
-                'amount'    => (int) ($payout->amount * 100), // kobo
+                'amount'    => (int) ($payout->amount), // kobo
                 'recipient' => $bank->recipient_code,
                 'reason'    => "Admin payout for request #{$payout->id}",
             ]);
@@ -133,6 +133,35 @@ class AdminPayoutService
             return $transferResponse['data'];
         });
     }
+
+
+    public function reject(PayoutRequest $payout, User $superAdmin)
+    {
+        // ✅ SUPERADMIN CHECK
+        if (! $superAdmin->hasRole('superadmin')) {
+            throw new \Exception('Only superadmin can reject payouts');
+        }
+
+
+        /**
+         * ✅ UPDATE PAYOUT STATUS TO REJECTED
+         */
+        $payout->update([
+            'status' => 'rejected',
+            'approved_by' => null,  // Clear approver
+            'approved_at' => null,
+            'updated_at' => now(),
+            // Optionally store rejection reason if passed from frontend
+            // 'rejection_reason' => $reason ?? null,
+        ]);
+
+        return [
+            'message' => 'Payout rejected successfully',
+            'payout_id' => $payout->id,
+            'status' => 'rejected'
+        ];
+    }
+
     /* =====================================================
         CREATE PAYSTACK RECIPIENT (FIXED)
     ====================================================== */

@@ -259,4 +259,20 @@ class WalletService
             $groupReference ?? $this->reference()
         );
     }
+
+    /**
+     * Get wallet details for logged-in user
+     */
+    public function getWallet(User $user): array
+    {
+        $wallet = $this->walletRepo->getByUserId($user->id);
+
+        return [
+            'id'       => $wallet->id,
+            'balance'  => $wallet->balance,
+            'currency' => $wallet->currency ?? 'NGN',
+            'created_at' => $wallet->created_at,
+        ];
+    }
+
 }

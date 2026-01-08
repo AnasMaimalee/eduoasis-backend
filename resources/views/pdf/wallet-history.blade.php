@@ -63,7 +63,7 @@
         <th>Amount</th>
         <th>Before</th>
         <th>After</th>
-        <th>Reference</th>
+        <th>Description</th>
         <th>Date</th>
     </tr>
     </thead>
@@ -77,7 +77,7 @@
             <td>₦{{ number_format($tx->amount, 2) }}</td>
             <td>₦{{ number_format($tx->balance_before, 2) }}</td>
             <td>₦{{ number_format($tx->balance_after, 2) }}</td>
-            <td>{{ $tx->reference }}</td>
+            <td>{{ $tx->description }}</td>
             <td>{{ $tx->created_at->format('Y-m-d H:i') }}</td>
         </tr>
     @endforeach

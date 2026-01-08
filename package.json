@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "cookie-universal-nuxt": "^2.2.2",
+    "pinia-plugin-persistedstate": "^4.7.1"
+  }
+}

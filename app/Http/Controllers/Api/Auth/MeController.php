@@ -183,9 +183,24 @@ class MeController extends Controller
     // ME endpoint
     public function me()
     {
-        $user = auth()->user();
-        return response()->json($this->formatUser($user));
+        $user = auth()->user(); // might be null
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        $user->load(['wallet']);
+
+        return response()->json([
+            'user' => $user,
+            'role' => $user->getRoleNames()->first() ?? 'user',
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+            'wallet' => [
+                'balance' => $user->wallet?->balance ?? 0,
+            ],
+            'menus' => $this->getMenusForUser($user),
+        ]);
     }
+
 
     // Format user data for API
     private function formatUser(User $user)
@@ -209,42 +224,45 @@ class MeController extends Controller
     {
         $menus = [
             'user' => [
-                ['name' => 'Dashboard', 'route' => '/user/dashboard', 'icon' => 'DashboardOutlined'],
-                ['name' => 'Home', 'route' => '/', 'icon' => 'HomeOutlined'],
-                ['name' => 'JAMB Services', 'route' => '/services/jamb-result', 'icon' => 'AppstoreOutlined'],
-                ['name' => 'JAMB Admission Letter', 'route' => '/services/admission-letter', 'icon' => 'FileTextOutlined'],
-                ['name' => 'JAMB Olevel Status', 'route' => '/services/olevel-status', 'icon' => 'ProfileOutlined'],
-                ['name' => 'Admission Letter Checking', 'route' => '/services/check-admission', 'icon' => 'CheckCircleOutlined'],
-                ['name' => 'JAMB Result Notification', 'route' => '/services/result-notification', 'icon' => 'NotificationOutlined'],
+                ['name' => 'Dashboard', 'route' => '/dashboard/user', 'icon' => 'DashboardOutlined'],
+                ['name' => 'Wallet', 'route' => '/user/wallet', 'icon' => 'UserOutlined'],
+
+                ['name' => 'JAMB Services', 'route' => '/user/services/jamb-result', 'icon' => 'AppstoreOutlined'],
+                ['name' => 'JAMB Admission Letter', 'route' => '/user/services/admission-letter', 'icon' => 'FileTextOutlined'],
+                ['name' => 'JAMB Olevel Status', 'route' => '/user/services/olevel-status', 'icon' => 'ProfileOutlined'],
+                ['name' => 'Admission Letter Checking', 'route' => '/user/services/check-admission', 'icon' => 'CheckCircleOutlined'],
+                ['name' => 'JAMB Result Notification', 'route' => '/user/services/result-notification', 'icon' => 'NotificationOutlined'],
             ],
             'administrator' => [
-                ['name' => 'Dashboard', 'route' => '/admin/dashboard', 'icon' => 'DashboardOutlined'],
+                ['name' => 'Dashboard', 'route' => '/dashboard/administrator', 'icon' => 'DashboardOutlined'],
+                ['name' => 'Wallet', 'route' => '/administrator/wallet', 'icon' => 'UserOutlined'],
 
                 // JAMB Services for Admin (different routes from user)
-                ['name' => 'JAMB Services', 'route' => '/admin/services/jamb-result', 'icon' => 'AppstoreOutlined'],
-                ['name' => 'JAMB Admission Letter', 'route' => '/admin/services/admission-letter', 'icon' => 'FileTextOutlined'],
-                ['name' => 'JAMB Olevel Status', 'route' => '/admin/services/olevel-status', 'icon' => 'ProfileOutlined'],
-                ['name' => 'Admission Letter Checking', 'route' => '/admin/services/check-admission', 'icon' => 'CheckCircleOutlined'],
-                ['name' => 'JAMB Result Notification', 'route' => '/admin/services/result-notification', 'icon' => 'NotificationOutlined'],
+                ['name' => 'JAMB Services', 'route' => '/administrator/services/jamb-result', 'icon' => 'AppstoreOutlined'],
+                ['name' => 'JAMB Admission Letter', 'route' => '/administrator/services/admission-letter', 'icon' => 'FileTextOutlined'],
+                ['name' => 'JAMB Olevel Status', 'route' => '/administrator/services/olevel-status', 'icon' => 'ProfileOutlined'],
+                ['name' => 'Admission Letter Checking', 'route' => '/administrator/services/check-admission', 'icon' => 'CheckCircleOutlined'],
+                ['name' => 'JAMB Result Notification', 'route' => '/administrator/services/result-notification', 'icon' => 'NotificationOutlined'],
             ],
             'superadmin' => [
-                ['name' => 'Dashboard', 'route' => '/super/dashboard', 'icon' => 'DashboardOutlined'],
+                ['name' => 'Dashboard', 'route' => '/dashboard/superadmin', 'icon' => 'DashboardOutlined'],
+                ['name' => 'Wallet', 'route' => '/superadmin/wallet', 'icon' => 'UserOutlined'],
+                ['name' => 'Payout', 'route' => '/superadmin/payout', 'icon' => 'UserOutlined'],
 
                 // Management menus
-                ['name' => 'Manage Users', 'route' => '/super/users', 'icon' => 'UserOutlined'],
-                ['name' => 'Manage Administrators', 'route' => '/super/admins', 'icon' => 'UserSwitchOutlined'],
-                ['name' => 'Manage Services', 'route' => '/super/services', 'icon' => 'AppstoreAddOutlined'],
-                ['name' => 'Pricing', 'route' => '/super/pricing', 'icon' => 'DollarOutlined'],
+                ['name' => 'Manage Users', 'route' => '/superadmin/users', 'icon' => 'UserOutlined'],
+                ['name' => 'Manage Administrators', 'route' => '/superadmin/administrators', 'icon' => 'UserSwitchOutlined'],
+                ['name' => 'Manage Services', 'route' => '/superadmin/services', 'icon' => 'AppstoreAddOutlined'],
+                ['name' => 'Pricing', 'route' => '/superadmin/pricing', 'icon' => 'DollarOutlined'],
 
                 // JAMB Services for Superadmin (different routes)
-                ['name' => 'JAMB Services', 'route' => '/super/services/jamb-result', 'icon' => 'AppstoreOutlined'],
-                ['name' => 'JAMB Admission Letter', 'route' => '/super/services/admission-letter', 'icon' => 'FileTextOutlined'],
-                ['name' => 'JAMB Olevel Status', 'route' => '/super/services/olevel-status', 'icon' => 'ProfileOutlined'],
-                ['name' => 'Admission Letter Checking', 'route' => '/super/services/check-admission', 'icon' => 'CheckCircleOutlined'],
-                ['name' => 'JAMB Result Notification', 'route' => '/super/services/result-notification', 'icon' => 'NotificationOutlined'],
+                ['name' => 'JAMB Services', 'route' => '/superadmin/services/jamb-result', 'icon' => 'AppstoreOutlined'],
+                ['name' => 'JAMB Admission Letter', 'route' => '/superadmin/services/admission-letter', 'icon' => 'FileTextOutlined'],
+                ['name' => 'JAMB Olevel Status', 'route' => '/superadmin/services/olevel-status', 'icon' => 'ProfileOutlined'],
+                ['name' => 'Admission Letter Checking', 'route' => '/superadmin/services/check-admission', 'icon' => 'CheckCircleOutlined'],
+                ['name' => 'JAMB Result Notification', 'route' => '/superadmin/services/result-notification', 'icon' => 'NotificationOutlined'],
 
                 // Superadmin specific JAMB requests
-                ['name' => 'All JAMB Requests', 'route' => '/super/jamb-requests', 'icon' => 'FileDoneOutlined'],
             ],
 
         ];
