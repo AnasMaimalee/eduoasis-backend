@@ -19,6 +19,7 @@ class UserServiceController extends Controller
                 'name',
                 'description',
                 'customer_price',
+                'status'
             ])
             ->orderBy('name')
             ->get()
@@ -27,6 +28,7 @@ class UserServiceController extends Controller
                 'name'  => $service->name,
                 'description'  => $service->description,
                 'price' => (float) $service->customer_price,
+                'status' => $service->status
             ]);
 
         return response()->json([

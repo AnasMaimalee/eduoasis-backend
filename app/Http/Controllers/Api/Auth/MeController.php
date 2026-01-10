@@ -228,16 +228,18 @@ class MeController extends Controller
                 ['name' => 'Wallet', 'route' => '/user/wallet', 'icon' => 'WalletOutlined'],
                 ['name' => 'Price Services', 'route' => '/user/services', 'icon' => 'SettingOutlined'],
 
-                ['name' => 'JAMB Services', 'route' => '/user/services/jamb-result', 'icon' => 'AppstoreOutlined'],
+                ['name' => 'JAMB Result', 'route' => '/user/services/jamb-result', 'icon' => 'AppstoreOutlined'],
                 ['name' => 'JAMB Admission Letter', 'route' => '/user/services/admission-letter', 'icon' => 'FileTextOutlined'],
                 ['name' => 'JAMB Olevel Status', 'route' => '/user/services/olevel-status', 'icon' => 'ProfileOutlined'],
                 ['name' => 'Admission Letter Checking', 'route' => '/user/services/check-admission', 'icon' => 'CheckCircleOutlined'],
                 ['name' => 'JAMB Result Notification', 'route' => '/user/services/result-notification', 'icon' => 'BellOutlined'],
+                ['name' => 'Setting', 'route' => '/user/setting', 'icon' => 'BellOutlined'],
+
             ],
             'administrator' => [
                 ['name' => 'Dashboard', 'route' => '/dashboard/administrator', 'icon' => 'DashboardOutlined'],
                 ['name' => 'Wallet', 'route' => '/administrator/wallet', 'icon' => 'WalletOutlined'],
-                ['name' => 'Payout', 'route' => '/administrator/payout', 'icon' => 'WalletOutlined'],
+                ['name' => 'Payout', 'route' => '/administrator/payout', 'icon' => 'BankOutlined'],
                 ['name' => 'Price Services', 'route' => '/administrator/price-services', 'icon' => 'SettingOutlined'],
 
                 // JAMB Services for Admin
@@ -246,6 +248,8 @@ class MeController extends Controller
                 ['name' => 'JAMB Olevel Status', 'route' => '/administrator/services/olevel-status', 'icon' => 'ProfileOutlined'],
                 ['name' => 'Admission Letter Checking', 'route' => '/administrator/services/check-admission', 'icon' => 'CheckCircleOutlined'],
                 ['name' => 'JAMB Result Notification', 'route' => '/administrator/services/result-notification', 'icon' => 'BellOutlined'],
+                ['name' => 'Setting', 'route' => '/administrator/setting', 'icon' => 'BellOutlined'],
+
             ],
             'superadmin' => [
                 ['name' => 'Dashboard', 'route' => '/dashboard/superadmin', 'icon' => 'DashboardOutlined'],

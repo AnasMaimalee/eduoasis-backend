@@ -30,7 +30,7 @@ class AdminPayoutService
 
         $bank = $admin->bankAccount;
         if (! $bank) {
-            abort(422, 'Please set bank details first.');
+            abort(422, 'Please go to setting and set bank details first.');
         }
 
         $wallet = $admin->wallet;

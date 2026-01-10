@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\UserManagementController;
 use App\Http\Controllers\Api\Auth\LoginAuditController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\Auth\EmailVerificationController;
+use App\Http\Controllers\Api\Profile\ProfileController;
 
 /* |--------------------------------------------------------------------------
  | Public Auth Routes
@@ -42,6 +43,13 @@ Route::post('reset-password', [PasswordResetController::class, 'reset']);
 
 Route::middleware('auth:api')->post('/update-password', [MeController::class, 'updatePassword']);
 Route::middleware('auth:api')->post('logout', [MeController::class, 'logout']);
+
+Route::middleware('auth:api')->prefix('profile')->group(function () {
+    Route::get('/', [ProfileController::class, 'show']);
+    Route::post('/bank', [ProfileController::class, 'updateBank']);
+    Route::post('/password', [ProfileController::class, 'updatePassword']);
+});
+
 
 // Email Verification
 Route::get('verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])
