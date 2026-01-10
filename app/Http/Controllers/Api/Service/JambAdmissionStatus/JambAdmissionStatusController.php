@@ -28,6 +28,15 @@ class JambAdmissionStatusController extends Controller
         );
     }
 
+    public function myJobs()
+    {
+        return JambAdmissionStatusRequestResource::collection(
+            JambAdmissionStatusRequest::where('status', 'processing')
+                ->where('taken_by', auth()->id())
+                ->latest()
+                ->get()
+        );
+    }
     public function processedByAdmin()
     {
         $admin = auth()->user();
@@ -55,6 +64,11 @@ class JambAdmissionStatusController extends Controller
                     'user' => [
                         'name'  => $job->user->name,
                         'email' => $job->user->email,
+                    ],
+
+                    'payment' => [
+                        'is_paid' => $job->is_paid,
+                        'paid_at' => $job->paid_at,
                     ],
 
                     'service' => $job->service->name,
@@ -112,7 +126,7 @@ class JambAdmissionStatusController extends Controller
     public function pending()
     {
         return JambAdmissionStatusRequestResource::collection(
-            $this->service->pending()
+            $this->service->pending()->sortByDesc('created_at')
         );
     }
 

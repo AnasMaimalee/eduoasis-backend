@@ -102,7 +102,7 @@ class UserManagementService
         ];
     }
 
-  
+
 
     /* ===============================
         WALLET OPERATIONS (SUPERADMIN)

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api\Service\JambAdmissionResultNotification;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\JambAdmissionLetterRequestResource;
 use App\Http\Resources\JambAdmissionResultNotificationRequestResource;
+use App\Models\JambAdmissionLetterRequest;
 use App\Models\JambAdmissionResultNotificationRequest;
 use Illuminate\Http\Request;
 use App\Services\JambAdmissionResultNotification\JambAdmissionResultNotificationService;
@@ -56,7 +58,10 @@ class JambAdmissionResultNotificationController extends Controller
                         'name'  => $job->user->name,
                         'email' => $job->user->email,
                     ],
-
+                    'payment' => [
+                        'is_paid' => $job->is_paid,
+                        'paid_at' => $job->paid_at,
+                    ],
                     'service' => $job->service->name,
 
                     'completed_by' => [
@@ -111,10 +116,18 @@ class JambAdmissionResultNotificationController extends Controller
     public function pending()
     {
         return JambAdmissionResultNotificationRequestResource::collection(
-            $this->service->pending()
+            $this->service->pending()->sortByDesc('created_at')
         );
     }
-
+    public function myJobs()
+    {
+        return JambAdmissionResultNotificationRequestResource::collection(
+            JambAdmissionResultNotificationRequest::where('status', 'processing')
+                ->where('taken_by', auth()->id())
+                ->latest()
+                ->get()
+        );
+    }
     /**
      * ======================
      * ADMINISTRATOR (WORKER)

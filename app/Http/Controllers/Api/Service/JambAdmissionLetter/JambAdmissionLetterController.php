@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api\Service\JambAdmissionLetter;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\JambResultRequestResource;
 use App\Models\JambAdmissionLetterRequest;
+use App\Models\JambResultRequest;
 use Illuminate\Http\Request;
 use App\Services\JambAdmissionLetter\JambAdmissionLetterService;
 use App\Http\Resources\JambAdmissionLetterRequestResource;
@@ -56,7 +58,10 @@ class JambAdmissionLetterController extends Controller
                         'name'  => $job->user->name,
                         'email' => $job->user->email,
                     ],
-
+                    'payment' => [
+                        'is_paid' => $job->is_paid,
+                        'paid_at' => $job->paid_at,
+                    ],
                     'service' => $job->service->name,
 
                     'completed_by' => [
@@ -93,6 +98,15 @@ class JambAdmissionLetterController extends Controller
 
     }
 
+    public function myJobs()
+    {
+        return JambAdmissionLetterRequestResource::collection(
+            JambAdmissionLetterRequest::where('status', 'processing')
+                ->where('taken_by', auth()->id())
+                ->latest()
+                ->get()
+        );
+    }
     /**
      * ======================
      * ADMIN / SUPER ADMIN
@@ -111,7 +125,7 @@ class JambAdmissionLetterController extends Controller
     public function pending()
     {
         return JambAdmissionLetterRequestResource::collection(
-            $this->service->pending()
+            $this->service->pending()->sortByDesc('created_at')
         );
     }
 

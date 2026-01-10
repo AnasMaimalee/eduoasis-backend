@@ -20,9 +20,7 @@ class JambAdmissionStatusRequestResource extends JsonResource
             'profile_code' => $this->profile_code,
             'registration_number' => $this->registration_number,
 
-            'customer_price' => $this->customer_price,
-            'admin_payout' => $this->admin_payout,
-            'platform_profit' => $this->platform_profit,
+
 
             'result_file' => $this->result_file
                 ? asset('storage/' . $this->result_file)

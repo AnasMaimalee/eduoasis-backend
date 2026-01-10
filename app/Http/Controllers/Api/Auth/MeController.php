@@ -226,6 +226,7 @@ class MeController extends Controller
             'user' => [
                 ['name' => 'Dashboard', 'route' => '/dashboard/user', 'icon' => 'DashboardOutlined'],
                 ['name' => 'Wallet', 'route' => '/user/wallet', 'icon' => 'WalletOutlined'],
+                ['name' => 'Price Services', 'route' => '/user/services', 'icon' => 'SettingOutlined'],
 
                 ['name' => 'JAMB Services', 'route' => '/user/services/jamb-result', 'icon' => 'AppstoreOutlined'],
                 ['name' => 'JAMB Admission Letter', 'route' => '/user/services/admission-letter', 'icon' => 'FileTextOutlined'],
@@ -236,9 +237,11 @@ class MeController extends Controller
             'administrator' => [
                 ['name' => 'Dashboard', 'route' => '/dashboard/administrator', 'icon' => 'DashboardOutlined'],
                 ['name' => 'Wallet', 'route' => '/administrator/wallet', 'icon' => 'WalletOutlined'],
+                ['name' => 'Payout', 'route' => '/administrator/payout', 'icon' => 'WalletOutlined'],
+                ['name' => 'Price Services', 'route' => '/administrator/price-services', 'icon' => 'SettingOutlined'],
 
                 // JAMB Services for Admin
-                ['name' => 'JAMB Services', 'route' => '/administrator/services/jamb-result', 'icon' => 'AppstoreOutlined'],
+                ['name' => 'JAMB Result', 'route' => '/administrator/services/jamb-result', 'icon' => 'AppstoreOutlined'],
                 ['name' => 'JAMB Admission Letter', 'route' => '/administrator/services/admission-letter', 'icon' => 'FileTextOutlined'],
                 ['name' => 'JAMB Olevel Status', 'route' => '/administrator/services/olevel-status', 'icon' => 'ProfileOutlined'],
                 ['name' => 'Admission Letter Checking', 'route' => '/administrator/services/check-admission', 'icon' => 'CheckCircleOutlined'],

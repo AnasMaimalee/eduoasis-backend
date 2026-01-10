@@ -62,7 +62,7 @@ class AdminPayoutService
 
         return PayoutRequest::create([
             'admin_id'         => $admin->id,
-            'amount'           => (int) ($amount * 100), // store kobo
+            'amount'           => (int) ($amount), // store kobo
             'status'           => PayoutStatus::PENDING,
             'balance_snapshot' => $wallet->balance,
         ]);
@@ -115,7 +115,7 @@ class AdminPayoutService
              * 2️⃣ INITIATE PAYSTACK TRANSFER
              */
             $transferResponse = $this->paystack->initiateTransfer([
-                'amount'    => (int) ($payout->amount), // kobo
+                'amount'    => (int) ($payout->amount * 100), // kobo
                 'recipient' => $bank->recipient_code,
                 'reason'    => "Admin payout for request #{$payout->id}",
             ]);

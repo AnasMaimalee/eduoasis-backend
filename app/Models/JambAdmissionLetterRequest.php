@@ -35,6 +35,7 @@ class JambAdmissionLetterRequest extends Model
         'result_file',
         'rejection_reason',
         'admin_note',
+        'profile_code'
     ];
 
     protected $casts = [

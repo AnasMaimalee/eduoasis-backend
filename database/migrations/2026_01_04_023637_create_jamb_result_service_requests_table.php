@@ -64,6 +64,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jamb_result_service_requests');
+        Schema::dropIfExists('jamb_result_requests');
     }
 };

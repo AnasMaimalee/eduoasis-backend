@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\Service\JambResult;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\JambAdmissionStatusRequestResource;
+use App\Models\JambAdmissionStatusRequest;
 use App\Models\JambResultRequest;
 use Illuminate\Http\Request;
 use App\Services\JambResult\JambResultService;
@@ -27,7 +29,15 @@ class JambResultController extends Controller
         );
     }
 
-
+    public function myJobs()
+    {
+        return JambResultRequestResource::collection(
+            JambResultRequest::where('status', 'processing')
+                ->where('taken_by', auth()->id())
+                ->latest()
+                ->get()
+        );
+    }
     public function processedByAdmin()
     {
         $admin = auth()->user();
@@ -56,7 +66,10 @@ class JambResultController extends Controller
                         'name'  => $job->user->name,
                         'email' => $job->user->email,
                     ],
-
+                    'payment' => [
+                        'is_paid' => $job->is_paid,
+                        'paid_at' => $job->paid_at,
+                    ],
                     'service' => $job->service->name,
 
                     'completed_by' => [
@@ -82,6 +95,7 @@ class JambResultController extends Controller
             'email' => 'required|email',
             'phone_number' => 'nullable|string',
             'registration_number' => 'nullable|string',
+            'profile_code' => 'nullable|string',
         ]);
 
         return response()->json(
@@ -107,9 +121,12 @@ class JambResultController extends Controller
     public function pending()
     {
         return JambResultRequestResource::collection(
-            $this->service->pending()
+            $this->service->pending()->sortByDesc('created_at')
         );
     }
+
+
+
 
     /**
      * ======================

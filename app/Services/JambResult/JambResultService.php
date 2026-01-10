@@ -79,6 +79,7 @@ class JambResultService
                 'user_id'             => $user->id,
                 'service_id'          => $service->id,
                 'email'               => $data['email'],
+                'profile_code'        =>$data['profile_code'],
                 'phone_number'        => $data['phone_number'] ?? null,
                 'registration_number' => $data['registration_number'] ?? null,
                 'customer_price'      => $service->customer_price,

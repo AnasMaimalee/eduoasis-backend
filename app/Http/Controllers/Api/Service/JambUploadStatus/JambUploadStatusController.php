@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\Service\JambUploadStatus;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\JambAdmissionStatusRequestResource;
+use App\Models\JambAdmissionStatusRequest;
 use App\Models\JambUploadStatusRequest;
 use Illuminate\Http\Request;
 use App\Services\JambUploadStatus\JambUploadStatusService;
@@ -25,6 +27,16 @@ class JambUploadStatusController extends Controller
     {
         return response()->json(
             $this->service->my(auth()->user())
+        );
+    }
+
+    public function myJobs()
+    {
+        return JambUploadStatusRequestResource::collection(
+            JambUploadStatusRequest::where('status', 'processing')
+                ->where('taken_by', auth()->id())
+                ->latest()
+                ->get()
         );
     }
     public function processedByAdmin()
@@ -55,7 +67,10 @@ class JambUploadStatusController extends Controller
                         'name'  => $job->user->name,
                         'email' => $job->user->email,
                     ],
-
+                    'payment' => [
+                        'is_paid' => $job->is_paid,
+                        'paid_at' => $job->paid_at,
+                    ],
                     'service' => $job->service->name,
 
                     'completed_by' => [
@@ -110,7 +125,7 @@ class JambUploadStatusController extends Controller
     public function pending()
     {
         return JambUploadStatusRequestResource::collection(
-            $this->service->pending()
+            $this->service->pending()->sortByDesc('created_at')
         );
     }
 

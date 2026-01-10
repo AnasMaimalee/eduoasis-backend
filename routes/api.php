@@ -132,11 +132,12 @@ Route::middleware('auth:api')->group(function () {
         Route::prefix("services/{$prefix}")->group(function () use ($controller) {
             // User routes
             Route::post('/', [$controller, 'store']);                    // Create request
-            Route::get('/my', [$controller, 'my']);                       // User's own requests
+            Route::get('/my', [$controller, 'my']);                        // User's own requests
 
             // Admin routes
             Route::middleware('role:administrator')->group(function () use ($controller) {
                 Route::get('/pending', [$controller, 'pending']);
+                Route::get('/my-pending-job', [$controller, 'myJobs']);
                 Route::get('/administrator', [$controller, 'processedByAdmin']);
                 Route::post('/{id}/take', [$controller, 'take']);
                 Route::post('/{id}/complete', [$controller, 'complete']);
