@@ -75,8 +75,7 @@ Route::middleware(['auth:api', 'role:superadmin'])->group(function () {
 /* |--------------------------------------------------------------------------
  | Paystack Webhook (Public - No Auth)
  |-------------------------------------------------------------------------- */
-Route::post('/webhooks/paystack', [PaystackWebhookController::class, 'handle'])
-    ->middleware('paystack.webhook');
+Route::post('/webhooks/paystack', [PaystackWebhookController::class, 'handle']);
 
 /* |--------------------------------------------------------------------------
  | Authenticated Routes

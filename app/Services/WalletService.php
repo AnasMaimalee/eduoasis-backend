@@ -48,12 +48,12 @@ class WalletService
         LOW-LEVEL LEDGER (PROTECTED)
     ================================ */
 
-    protected function credit(
+    public function credit(
         User $user,
         float $amount,
         string $description,
         string $groupReference
-    ): WalletTransaction {
+    ) {
         $wallet = $this->walletRepo->getByUserId($user->id);
 
         $before = $wallet->balance;
@@ -74,7 +74,8 @@ class WalletService
         ]);
     }
 
-    protected function debit(
+
+    public function debit(
         User $user,
         float $amount,
         string $description,
@@ -278,6 +279,10 @@ class WalletService
             'currency' => $wallet->currency ?? 'NGN',
             'created_at' => $wallet->created_at,
         ];
+    }
+    public function transactionExists(string $reference): bool
+    {
+        return WalletTransaction::where('reference', $reference)->exists();
     }
 
 }

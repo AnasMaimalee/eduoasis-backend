@@ -14,10 +14,10 @@ class PayoutRequest extends Model
         'admin_id',
         'amount',
         'status',
-        'reference',
         'balance_snapshot',
         'approved_by',
         'approved_at',
+        'reference'
     ];
 
     protected $casts = [

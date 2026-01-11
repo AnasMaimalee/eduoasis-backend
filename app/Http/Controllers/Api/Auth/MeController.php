@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AdminAccountCreated;
-use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Str;
 use App\Models\LoginAudit;
 use Illuminate\Support\Facades\Http;
@@ -45,7 +48,6 @@ class MeController extends Controller
         ], 201);
     }
 
-    // LOGIN
     public function login(Request $request)
     {
         $request->validate([
@@ -71,6 +73,7 @@ class MeController extends Controller
             'me' => $this->formatUser($user)
         ]);
     }
+
 
     /**
      * Logout user (invalidate JWT token)
@@ -230,9 +233,9 @@ class MeController extends Controller
 
                 ['name' => 'JAMB Result', 'route' => '/user/services/jamb-result', 'icon' => 'AppstoreOutlined'],
                 ['name' => 'JAMB Admission Letter', 'route' => '/user/services/admission-letter', 'icon' => 'FileTextOutlined'],
-                ['name' => 'JAMB Olevel Status', 'route' => '/user/services/olevel-status', 'icon' => 'ProfileOutlined'],
-                ['name' => 'Admission Letter Checking', 'route' => '/user/services/check-admission', 'icon' => 'CheckCircleOutlined'],
-                ['name' => 'JAMB Result Notification', 'route' => '/user/services/result-notification', 'icon' => 'BellOutlined'],
+                ['name' => 'JAMB Olevel Status', 'route' => '/user/services/jamb-olevel-status', 'icon' => 'ProfileOutlined'],
+                ['name' => 'Admission Letter Checking', 'route' => '/user/services/jamb-admission-letter-checking', 'icon' => 'CheckCircleOutlined'],
+                ['name' => 'JAMB Result Notification', 'route' => '/user/services/jamb-result-notification', 'icon' => 'BellOutlined'],
                 ['name' => 'Setting', 'route' => '/user/setting', 'icon' => 'BellOutlined'],
 
             ],
@@ -267,6 +270,8 @@ class MeController extends Controller
                 ['name' => 'JAMB Olevel Status', 'route' => '/superadmin/services/olevel-status', 'icon' => 'IdcardOutlined'],
                 ['name' => 'Admission Checking Status', 'route' => '/superadmin/services/check-admission', 'icon' => 'CheckCircleOutlined'],
                 ['name' => 'JAMB Result Notification', 'route' => '/superadmin/services/result-notification', 'icon' => 'BellOutlined'],
+                ['name' => 'Setting', 'route' => '/superadmin/setting', 'icon' => 'BellOutlined'],
+
             ],
         ];
 

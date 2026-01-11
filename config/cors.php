@@ -7,7 +7,8 @@ return [
 
     'allowed_origins' => [
         'http://localhost:3000',             // local dev
-        'https://perspective-attract-wma-encounter.trycloudflare.com',
+        'https://forum-broad-thoughts-organizing.trycloudflare.com',
+        'http://172.24.24.69:3000'
     ],
 
     'allowed_origins_patterns' => [

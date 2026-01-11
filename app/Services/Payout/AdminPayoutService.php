@@ -123,12 +123,18 @@ class AdminPayoutService
             /**
              * 3️⃣ UPDATE PAYOUT STATUS
              */
+            /**
+             * 3️⃣ UPDATE PAYOUT STATUS
+             */
+            /**
+             * 3️⃣ MARK AS PROCESSING (WAIT FOR WEBHOOK)
+             */
             $payout->update([
-                'status'      => 'paid',
-                'approved_by' => auth()->id(),
-                'paid_at'     => now(),
-                'reference'   => $transferResponse['data']['reference'] ?? null,
+                'status'              => PayoutStatus::PROCESSING,
+                'approved_by'         => auth()->id(),
+                'reference'  => $transferResponse['data']['reference'] ?? null,
             ]);
+
 
             return $transferResponse['data'];
         });

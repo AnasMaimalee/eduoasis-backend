@@ -32,4 +32,10 @@ class WalletRepository
     {
         return WalletTransaction::create($data);
     }
+
+    public function transactionExists(string $groupReference): bool
+    {
+        return WalletTransaction::where('group_reference', $groupReference)->exists();
+    }
+
 }

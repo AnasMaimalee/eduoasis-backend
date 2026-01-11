@@ -8,4 +8,5 @@ enum PayoutStatus: string
     case PAID = 'paid';
     case FAILED = 'failed';
     case REJECTED = 'rejected';
+    case PROCESSING = 'processing';
 }
