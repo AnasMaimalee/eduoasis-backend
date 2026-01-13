@@ -32,7 +32,7 @@ class PaystackWebhookService
         Log::emergency('STEP 4: Webhook service finished processing');
     }
 
-    protected function handleChargeSuccess(array $payload): void
+    public function handleChargeSuccess(array $payload): void
     {
         Log::emergency('STEP 2: Inside charge.success handler');
 
@@ -101,7 +101,7 @@ class PaystackWebhookService
         }
     }
 
-    protected function handleTransferSuccess(array $payload): void
+    public function handleTransferSuccess(array $payload): void
     {
         $reference = $payload['data']['reference'] ?? null;
 

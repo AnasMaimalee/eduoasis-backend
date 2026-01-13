@@ -34,7 +34,8 @@ use App\Http\Controllers\Api\Profile\ProfileController;
  |-------------------------------------------------------------------------- */
 Route::prefix('auth')->group(function () {
     Route::post('/register', [MeController::class, 'register']);
-    Route::post('/login', [MeController::class, 'login']);
+    Route::post('/login', [MeController::class, 'login'])
+        ->middleware('throttle:5,1');
 });
 
 // Password Reset

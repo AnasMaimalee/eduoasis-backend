@@ -8,6 +8,7 @@ use App\Models\WalletTransaction;
 class WalletRepository
 {
 
+    protected $query;
     public function transactionsQuery()
     {
         return WalletTransaction::query();
@@ -17,6 +18,12 @@ class WalletRepository
         return Wallet::where('user_id', $userId)->firstOrFail();
     }
 
+
+    public function lockForUpdate(): self
+    {
+        $this->query->lockForUpdate();
+        return $this;
+    }
     public function createTransaction(array $data): WalletTransaction
     {
         return WalletTransaction::create($data);

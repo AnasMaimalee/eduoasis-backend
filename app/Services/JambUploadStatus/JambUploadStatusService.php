@@ -100,7 +100,11 @@ class JambUploadStatusService
             )
         );
 
-        return $createdRequest;
+        return response()->json([
+            'success' => true,
+            'message' => 'Your work has been successfully submitted.',
+        ], 201);
+
     }
 
     /**

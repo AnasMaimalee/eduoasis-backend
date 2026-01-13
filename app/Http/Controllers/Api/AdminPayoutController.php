@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Services\AdminPayoutService;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class AdminPayoutController extends Controller
 {
@@ -14,24 +15,24 @@ class AdminPayoutController extends Controller
         $this->middleware(['auth:api', 'role:administrator']);
     }
 
-    public function payout(Request $request)
+    public function payout(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'amount' => 'required|numeric|min:100',
         ]);
 
-        $transaction = $this->payoutService->payout(
+        $amount = (float) $validated['amount'];
+
+        // 🔒 Perform payout (no return exposed)
+        $this->payoutService->payout(
             auth()->user(),
-            $validated['amount']
+            $amount
         );
 
         return response()->json([
+            'success' => true,
             'message' => 'Payout initiated successfully',
-            'transaction' => [
-                'id'        => $transaction->id,
-                'amount'    => $transaction->amount,
-                'reference' => $transaction->reference,
-            ],
-        ]);
+            'amount'  => $amount,
+        ], 200);
     }
 }

@@ -7,7 +7,7 @@ return [
 
     'allowed_origins' => [
         'http://localhost:3000',             // local dev
-        'https://forum-broad-thoughts-organizing.trycloudflare.com',
+        'https://argued-due-choosing-covered.trycloudflare.com',
         'http://172.24.24.69:3000'
     ],
 

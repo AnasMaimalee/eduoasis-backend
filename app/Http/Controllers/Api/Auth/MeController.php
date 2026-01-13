@@ -232,11 +232,11 @@ class MeController extends Controller
                 ['name' => 'Price Services', 'route' => '/user/services', 'icon' => 'SettingOutlined'],
 
                 ['name' => 'JAMB Result', 'route' => '/user/services/jamb-result', 'icon' => 'AppstoreOutlined'],
-                ['name' => 'JAMB Admission Letter', 'route' => '/user/services/admission-letter', 'icon' => 'FileTextOutlined'],
+                ['name' => 'JAMB Admission Letter', 'route' => '/user/services/jamb-admission-letter', 'icon' => 'FileTextOutlined'],
                 ['name' => 'JAMB Olevel Status', 'route' => '/user/services/jamb-olevel-status', 'icon' => 'ProfileOutlined'],
-                ['name' => 'Admission Letter Checking', 'route' => '/user/services/jamb-admission-letter-checking', 'icon' => 'CheckCircleOutlined'],
+                ['name' => 'Admission Status Checking', 'route' => '/user/services/jamb-admission-status-checking', 'icon' => 'CheckCircleOutlined'],
                 ['name' => 'JAMB Result Notification', 'route' => '/user/services/jamb-result-notification', 'icon' => 'BellOutlined'],
-                ['name' => 'Setting', 'route' => '/user/setting', 'icon' => 'BellOutlined'],
+                ['name' => 'Setting', 'route' => '/user/setting', 'icon' => 'SettingOutlined'],
 
             ],
             'administrator' => [
@@ -247,11 +247,11 @@ class MeController extends Controller
 
                 // JAMB Services for Admin
                 ['name' => 'JAMB Result', 'route' => '/administrator/services/jamb-result', 'icon' => 'AppstoreOutlined'],
-                ['name' => 'JAMB Admission Letter', 'route' => '/administrator/services/admission-letter', 'icon' => 'FileTextOutlined'],
-                ['name' => 'JAMB Olevel Status', 'route' => '/administrator/services/olevel-status', 'icon' => 'ProfileOutlined'],
-                ['name' => 'Admission Letter Checking', 'route' => '/administrator/services/check-admission', 'icon' => 'CheckCircleOutlined'],
-                ['name' => 'JAMB Result Notification', 'route' => '/administrator/services/result-notification', 'icon' => 'BellOutlined'],
-                ['name' => 'Setting', 'route' => '/administrator/setting', 'icon' => 'BellOutlined'],
+                ['name' => 'JAMB Admission Letter', 'route' => '/administrator/services/jamb-admission-letter', 'icon' => 'FileTextOutlined'],
+                ['name' => 'JAMB Olevel Status', 'route' => '/administrator/services/jamb-olevel-status', 'icon' => 'ProfileOutlined'],
+                ['name' => 'Admission Status Checking', 'route' => '/administrator/services/jamb-check-admission', 'icon' => 'CheckCircleOutlined'],
+                ['name' => 'JAMB Result Notification', 'route' => '/administrator/services/jamb-result-notification', 'icon' => 'BellOutlined'],
+                ['name' => 'Setting', 'route' => '/administrator/setting', 'icon' => 'SettingOutlined'],
 
             ],
             'superadmin' => [
@@ -266,11 +266,11 @@ class MeController extends Controller
 
                 // JAMB Services for Superadmin
                 ['name' => 'JAMB Original Result', 'route' => '/superadmin/services/jamb-result', 'icon' => 'FileSearchOutlined'],
-                ['name' => 'JAMB Admission Letter', 'route' => '/superadmin/services/admission-letter', 'icon' => 'FileTextOutlined'],
-                ['name' => 'JAMB Olevel Status', 'route' => '/superadmin/services/olevel-status', 'icon' => 'IdcardOutlined'],
-                ['name' => 'Admission Checking Status', 'route' => '/superadmin/services/check-admission', 'icon' => 'CheckCircleOutlined'],
-                ['name' => 'JAMB Result Notification', 'route' => '/superadmin/services/result-notification', 'icon' => 'BellOutlined'],
-                ['name' => 'Setting', 'route' => '/superadmin/setting', 'icon' => 'BellOutlined'],
+                ['name' => 'JAMB Admission Letter', 'route' => '/superadmin/services/jambadmission-letter', 'icon' => 'FileTextOutlined'],
+                ['name' => 'JAMB Olevel Status', 'route' => '/superadmin/services/jamb-olevel-status', 'icon' => 'IdcardOutlined'],
+                ['name' => 'Admission Checking Status', 'route' => '/superadmin/services/jamb-check-admission', 'icon' => 'CheckCircleOutlined'],
+                ['name' => 'JAMB Result Notification', 'route' => '/superadmin/services/jamb-result-notification', 'icon' => 'BellOutlined'],
+                ['name' => 'Setting', 'route' => '/superadmin/setting', 'icon' => 'SettingOutlined'],
 
             ],
         ];

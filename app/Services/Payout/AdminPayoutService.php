@@ -10,8 +10,6 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-use Illuminate\Support\Facades\Request;
-
 class AdminPayoutService
 {
     public function __construct(
@@ -22,7 +20,7 @@ class AdminPayoutService
     /* =====================================================
         ADMIN REQUEST PAYOUT
     ====================================================== */
-    public function request(User $admin, float $amount): PayoutRequest
+    public function request(User $admin, float $amount): array
     {
         if (! $admin->hasRole('administrator')) {
             abort(403, 'Only administrators can request payouts.');
@@ -60,23 +58,28 @@ class AdminPayoutService
             abort(422, 'Unable to configure bank recipient. Please contact support.');
         }
 
-        return PayoutRequest::create([
+        // ✅ CREATE PAYOUT REQUEST
+        PayoutRequest::create([
             'admin_id'         => $admin->id,
-            'amount'           => (int) ($amount), // store kobo
+            'amount'           => (int) ($amount), // store in kobo
             'status'           => PayoutStatus::PENDING,
             'balance_snapshot' => $wallet->balance,
         ]);
+
+        return [
+            'success' => true,
+            'message' => 'Payout request submitted successfully',
+            'amount'  => $amount,
+        ];
     }
 
     /* =====================================================
         SUPERADMIN APPROVES & PAYS
     ====================================================== */
-    public function approveAndPay(
-        PayoutRequest $payout,
-        User $superAdmin
-    ) {
+    public function approveAndPay(PayoutRequest $payout, User $superAdmin): array
+    {
         if (! $superAdmin->hasRole('superadmin')) {
-            abort(403, 'Only superadmin can approve payouts');
+            abort(403, 'Only superadmin can approve payouts.');
         }
 
         $admin = $payout->administrator;
@@ -88,9 +91,7 @@ class AdminPayoutService
 
         return DB::transaction(function () use ($payout, $admin, $bank) {
 
-            /**
-             * 1️⃣ CREATE RECIPIENT IF NOT EXISTS
-             */
+            // 🔹 CREATE RECIPIENT IF NOT EXISTS
             if (! $bank->recipient_code) {
                 $recipientResponse = $this->paystack->createRecipient([
                     'type'           => 'nuban',
@@ -111,65 +112,53 @@ class AdminPayoutService
                 ]);
             }
 
-            /**
-             * 2️⃣ INITIATE PAYSTACK TRANSFER
-             */
+            // 🔹 INITIATE PAYSTACK TRANSFER
             $transferResponse = $this->paystack->initiateTransfer([
-                'amount'    => (int) ($payout->amount * 100), // kobo
+                'amount'    => (int) ($payout->amount * 100), // convert to kobo
                 'recipient' => $bank->recipient_code,
                 'reason'    => "Admin payout for request #{$payout->id}",
             ]);
 
-            /**
-             * 3️⃣ UPDATE PAYOUT STATUS
-             */
-            /**
-             * 3️⃣ UPDATE PAYOUT STATUS
-             */
-            /**
-             * 3️⃣ MARK AS PROCESSING (WAIT FOR WEBHOOK)
-             */
+            // 🔹 UPDATE PAYOUT STATUS
             $payout->update([
-                'status'              => PayoutStatus::PROCESSING,
-                'approved_by'         => auth()->id(),
-                'reference'  => $transferResponse['data']['reference'] ?? null,
+                'status'      => PayoutStatus::PROCESSING,
+                'approved_by' => auth()->id(),
+                'reference'   => $transferResponse['data']['reference'] ?? null,
             ]);
 
-
-            return $transferResponse['data'];
+            return [
+                'success' => true,
+                'message' => 'Payout initiated successfully',
+                'amount'  => $payout->amount,
+            ];
         });
     }
 
-
-    public function reject(PayoutRequest $payout, User $superAdmin)
+    /* =====================================================
+        SUPERADMIN REJECTS PAYOUT
+    ====================================================== */
+    public function reject(PayoutRequest $payout, User $superAdmin): array
     {
-        // ✅ SUPERADMIN CHECK
         if (! $superAdmin->hasRole('superadmin')) {
-            throw new \Exception('Only superadmin can reject payouts');
+            abort(403, 'Only superadmin can reject payouts.');
         }
 
-
-        /**
-         * ✅ UPDATE PAYOUT STATUS TO REJECTED
-         */
         $payout->update([
-            'status' => 'rejected',
-            'approved_by' => null,  // Clear approver
+            'status'      => PayoutStatus::REJECTED,
+            'approved_by' => null,
             'approved_at' => null,
-            'updated_at' => now(),
-            // Optionally store rejection reason if passed from frontend
-            // 'rejection_reason' => $reason ?? null,
+            'updated_at'  => now(),
         ]);
 
         return [
-            'message' => 'Payout rejected successfully',
-            'payout_id' => $payout->id,
-            'status' => 'rejected'
+            'success'   => true,
+            'message'   => 'Payout rejected successfully',
+            'amount'    => $payout->amount,
         ];
     }
 
     /* =====================================================
-        CREATE PAYSTACK RECIPIENT (FIXED)
+        CREATE PAYSTACK RECIPIENT (PRIVATE)
     ====================================================== */
     private function createPaystackRecipient(User $admin): void
     {
@@ -183,19 +172,14 @@ class AdminPayoutService
             'currency'       => 'NGN',
         ]);
 
-        // 🔥 LOG PAYSTACK RESPONSE (VERY IMPORTANT)
         Log::info('Paystack recipient response', $response);
 
         if (! ($response['status'] ?? false)) {
-            abort(
-                422,
-                'Paystack error: ' . ($response['message'] ?? 'Recipient creation failed')
-            );
+            abort(422, 'Paystack error: ' . ($response['message'] ?? 'Recipient creation failed'));
         }
 
         $bank->update([
             'recipient_code' => $response['data']['recipient_code'],
         ]);
     }
-
 }

@@ -45,7 +45,7 @@
 <body>
 
 <div class="header">
-    <h2>{{ $company }} – Wallet Transactions</h2>
+    <h2>Eduoasis – Wallet Transactions</h2>
     <small>Generated: {{ $generatedAt->format('Y-m-d H:i') }}</small>
 </div>
 

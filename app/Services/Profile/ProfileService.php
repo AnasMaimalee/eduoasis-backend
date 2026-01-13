@@ -33,7 +33,7 @@ class ProfileService
 
         return [
             'message' => 'Bank account saved successfully',
-            'data' => $account
+            'data' => "Correct"
         ];
     }
 

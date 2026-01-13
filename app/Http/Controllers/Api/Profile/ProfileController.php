@@ -13,12 +13,12 @@ class ProfileController extends Controller
     // Get user profile + bank account
     public function show()
     {
-        return response()->json(
-            $this->service->profile(auth()->user())
-        );
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile data fetched successfully'
+        ]);
     }
 
-    // Create or update bank account
     public function updateBank(Request $request)
     {
         $request->validate([
@@ -27,16 +27,16 @@ class ProfileController extends Controller
             'account_number' => 'required|string|min:10',
         ]);
 
-        return response()->json(
-            $this->service->updateBank(auth()->user(), $request->only([
-                'bank_name',
-                'account_name',
-                'account_number'
-            ]))
-        );
+        $this->service->updateBank(auth()->user(), $request->only([
+            'bank_name', 'account_name', 'account_number'
+        ]));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Bank account updated successfully'
+        ]);
     }
 
-    // Update password
     public function updatePassword(Request $request)
     {
         $request->validate([
@@ -44,12 +44,16 @@ class ProfileController extends Controller
             'password'         => 'required|min:8|confirmed',
         ]);
 
-        return response()->json(
-            $this->service->updatePassword(
-                auth()->user(),
-                $request->current_password,
-                $request->password
-            )
+        $this->service->updatePassword(
+            auth()->user(),
+            $request->current_password,
+            $request->password
         );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password updated successfully'
+        ]);
     }
+
 }
