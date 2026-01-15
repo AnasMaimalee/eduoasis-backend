@@ -2,28 +2,43 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\MailMessage;
 
 class ExamSubmittedNotification extends Notification
 {
-    use Queueable;
+    public string $examId;
 
-    public function __construct(
-        protected string $examId
-    ) {}
-
-    public function via($notifiable): array
+    public function __construct(string $examId)
     {
-        return ['database'];
+        $this->examId = $examId;
     }
 
-    public function toDatabase($notifiable): array
+    public function via($notifiable)
+    {
+        return ['mail', 'database']; // email + database notification
+    }
+
+    public function toMail($notifiable): MailMessage
+    {
+        $frontendUrl = config('app.frontend_url');
+
+        return (new MailMessage)
+            ->subject('CBT Exam Submitted')
+            ->greeting('Hello ' . $notifiable->name)
+            ->line('Your CBT exam has been submitted successfully.')
+            ->action(
+                'View Result',
+                "{$frontendUrl}/exams/{$this->examId}/result"
+            )
+            ->line('Thank you for using our CBT platform.');
+    }
+
+    public function toArray($notifiable)
     {
         return [
-            'title' => 'CBT Exam Submitted',
-            'message' => 'Your CBT exam has been submitted successfully.',
             'exam_id' => $this->examId,
+            'message' => 'Your CBT exam has been submitted successfully!',
         ];
     }
 }

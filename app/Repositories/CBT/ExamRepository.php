@@ -79,8 +79,12 @@ class ExamRepository
      */
     public function getExamQuestions(Exam $exam)
     {
-        return ExamAnswer::with('question.subject')
+        return ExamAnswer::with([
+            'question',
+            'question.subject'
+        ])
             ->where('exam_id', $exam->id)
+            ->orderBy('created_at')
             ->get();
     }
 

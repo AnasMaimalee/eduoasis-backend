@@ -5,6 +5,7 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
+use Illuminate\Notifications\Messages\MailMessage;
 class WalletDebitedNotification extends Notification
 {
     use Queueable;
@@ -35,12 +36,18 @@ class WalletDebitedNotification extends Notification
         ];
     }
 
-    public function toMail($notifiable)
+    public function toMail($notifiable): MailMessage
     {
-        return (new \Illuminate\Notifications\Messages\MailMessage)
-            ->subject("Wallet Debited")
-            ->line("Your wallet has been debited ₦{$this->amount} for {$this->purpose}.")
-            ->action('View Exam', url("/user/cbt/exams/{$this->referenceId}"))
+        $frontendUrl = config('app.frontend_url');
+
+        return (new MailMessage)
+            ->subject('Wallet Debited')
+            ->greeting('Hello ' . $notifiable->name)
+            ->line("Your wallet has been debited ₦" . number_format($this->amount, 2) . " for {$this->purpose}.")
+            ->action(
+                'View Exam',
+                "{$frontendUrl}/user/cbt/exams/{$this->referenceId}"
+            )
             ->line('Thank you for using our service!');
     }
 }

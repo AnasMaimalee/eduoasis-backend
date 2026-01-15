@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api\CBT;
 
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
+use App\Models\ExamAnswer;
 use Illuminate\Http\Request;
 use App\Services\CBT\ExamService;
 use App\Services\CBT\WalletPaymentService;
 use Illuminate\Support\Str;
+use App\Notifications\ExamStartedNotification;
 
 class ExamController extends Controller
 {
@@ -18,10 +20,15 @@ class ExamController extends Controller
 
     // ---------------- START EXAM ----------------
 
-    public function start(Request $request, WalletPaymentService $walletService)
-    {
-        $user = $request->user();
 
+    public function start(Request $request, WalletPaymentService $walletService, ExamService $examService)
+    {
+        $request->validate([
+            'subjects' => 'required|array|size:' . config('cbt.subjects_count'),
+            'subjects.*' => 'exists:subjects,id',
+        ]);
+
+        $user = $request->user();
         $examFee = (float) config('cbt.exam_fee');
 
         if ($examFee <= 0) {
@@ -30,17 +37,13 @@ class ExamController extends Controller
             ], 500);
         }
 
-        $exam = Exam::create([
-            'id' => Str::uuid(),
-            'user_id' => $user->id,
-            'total_questions' =>
-                config('cbt.subjects_count') * config('cbt.questions_per_subject'),
-            'duration_minutes' => config('cbt.duration_minutes'),
-            'fee' => $examFee,
-            'started_at' => now(),
-        ]);
+        // ✅ START EXAM PROPERLY (THIS CREATES QUESTIONS)
+        $exam = $examService->startExam(
+            $user->id,
+            $request->subjects
+        );
 
-        // 🔥 THIS was where your error came from
+        // ✅ DEBIT WALLET AFTER EXAM IS CREATED
         $walletService->debitExamFee(
             $user->id,
             $exam,
@@ -55,6 +58,7 @@ class ExamController extends Controller
     }
 
 
+
     // ---------------- FETCH QUESTIONS ----------------
     public function show(Exam $exam)
     {
@@ -67,24 +71,28 @@ class ExamController extends Controller
     }
 
     // ---------------- SAVE ANSWER ----------------
-    public function answer(Request $request, Exam $exam)
+    public function submitAnswer(Request $request, Exam $exam, $answerId)
     {
-        $request->validate([
-            'answer_id' => 'required|uuid',
-            'selected_option' => 'required|in:A,B,C,D'
+        // ✅ Validate ONLY user input
+        $validated = $request->validate([
+            'selected_option' => 'required|in:A,B,C,D,E',
         ]);
 
-        $answer = $this->service->answerQuestion(
-            $exam->id,
-            $request->answer_id,
-            $request->selected_option
-        );
+        // ✅ Fetch answer using route param
+        $examAnswer = ExamAnswer::where('id', $answerId)
+            ->where('exam_id', $exam->id)
+            ->firstOrFail();
+
+        $examAnswer->update([
+            'selected_option' => $validated['selected_option'],
+            'is_correct' => $examAnswer->question->correct_option === $validated['selected_option'],
+        ]);
 
         return response()->json([
-            'message' => 'Answer saved',
-            'answer' => $answer
+            'message' => 'Answer saved successfully'
         ]);
     }
+
 
     // ---------------- SUBMIT EXAM ----------------
     public function submit(Exam $exam)
@@ -100,7 +108,7 @@ class ExamController extends Controller
     public function refundIfUnsubmitted(Exam $exam)
     {
         try {
-            $this->walletService->refundIfUnsubmitted($exam);
+            $this->walletService->refundExamFee($exam);
             return response()->json([
                 'message' => 'Exam fee refunded due to network issue'
             ]);

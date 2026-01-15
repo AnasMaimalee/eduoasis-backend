@@ -13,8 +13,8 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'TectBridge'),
-
+    'name' => env('APP_NAME', 'EduOasis'),
+    'frontend_url' => env('FRONTEND_URL', ''),
     /*
     |--------------------------------------------------------------------------
     | Application Environment

@@ -50,15 +50,40 @@ class ResultController extends Controller
     /**
      * Generate PDF result slip
      */
-    public function downloadPdf(Exam $exam)
+    public function downloadResult(Exam $exam, ResultPdfService $pdfService)
     {
-        $this->authorize('downloadPdf', $exam);
+        // 🔐 Ensure exam belongs to authenticated user
+        if ($exam->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized');
+        }
 
-        $pdf = $this->pdfService->generate($exam);
+        // ✅ Build subject breakdown EXACTLY as PDF expects
+        $subjects = $exam->answers()
+            ->with('question.subject')
+            ->get()
+            ->groupBy(fn ($ans) => $ans->question->subject->name)
+            ->map(function ($items, $subject) {
+                $total = $items->count();
+                $correct = $items->where('is_correct', true)->count();
 
-        return response()->streamDownload(
-            fn () => print($pdf->output()),
-            "Exam_Result_{$exam->id}.pdf"
-        );
+                return [
+                    'subject' => $subject,
+                    'total_questions' => $total,
+                    'correct' => $correct,
+                    'wrong' => $total - $correct,
+                    'score' => $correct, // adjust later if subject has weight
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        $breakdown = [
+            'subjects' => $subjects,
+        ];
+
+        // ✅ Generate & download PDF
+        return $pdfService->generate($exam, $breakdown);
     }
+
+
 }

@@ -35,7 +35,6 @@ class ExamService
         }
 
         return DB::transaction(function () use ($userId, $subjectIds, $settings) {
-
             $exam = $this->examRepository->createExam([
                 'user_id' => $userId,
                 'status' => 'ongoing',
@@ -95,10 +94,11 @@ class ExamService
         })->values()->toArray();
     }
 
-    // ---------------- SAVE ANSWER ----------------
+    // ---------------- SAVE ANSWER ✅ FIXED ----------------
     public function answerQuestion(string $examId, string $answerId, string $selectedOption)
     {
-        $exam = $this->examRepository->findOngoingExam(auth()->id());
+        // ✅ FIX: Load exam by specific ID, not findOngoingExam()
+        $exam = Exam::findOrFail($examId);
         $this->assertOwnership($exam);
 
         if ($exam->status !== 'ongoing') {
@@ -111,12 +111,15 @@ class ExamService
         return $examAnswer;
     }
 
-    // ---------------- SUBMIT EXAM ----------------
+    // ---------------- SUBMIT EXAM ✅ FIXED ----------------
     public function submitExam(Exam $exam)
     {
         $this->assertOwnership($exam);
 
-        if ($exam->status !== 'ongoing') return;
+        // ✅ Early return is fine here - but transaction ensures update happens
+        if ($exam->status !== 'ongoing') {
+            return;
+        }
 
         DB::transaction(function () use ($exam) {
             $answers = $this->examRepository->getExamQuestions($exam);
@@ -125,9 +128,12 @@ class ExamService
             foreach ($answers as $ans) {
                 $correct = $ans->selected_option === $ans->question->correct_option;
                 $ans->update(['is_correct' => $correct]);
-                if ($correct) $totalScore++;
+                if ($correct) {
+                    $totalScore++;
+                }
             }
 
+            // ✅ This ALWAYS runs and sets status to 'submitted'
             $exam->update([
                 'status' => 'submitted',
                 'submitted_at' => now(),

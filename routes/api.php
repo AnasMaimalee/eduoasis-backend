@@ -314,7 +314,7 @@ Route::middleware(['auth:api', 'role:user'])->prefix('user/cbt')->group(function
     // Results
     Route::get('/results/{exam}', [ResultController::class, 'show']);
     Route::get('/results/{exam}/summary', [ResultController::class, 'summary']);
-    Route::get('/results/{exam}/pdf', [ResultController::class, 'downloadPdf']);
+    Route::get('/results/{exam}/pdf', [ResultController::class, 'downloadResult']);
 
     // Leaderboard
     Route::get('/leaderboard', [LeaderboardController::class, 'selfRank']);
@@ -350,8 +350,7 @@ Route::middleware(['auth:api', 'role:user'])
         Route::get('/exam/ongoing', [ExamController::class, 'ongoing']);
         Route::get('/exam/{exam}/meta', [ExamController::class, 'meta']);
         Route::get('/exam/{exam}/questions', [ExamController::class, 'show']);
-        Route::post('/exam/{exam}/answer', [ExamController::class, 'answer']);
-        Route::post('/exam/{exam}/answer/{answer}', [ExamController::class, 'answer']);
+        Route::post('/exam/{exam}/answer/{answer}', [ExamController::class, 'submitAnswer']);
         Route::post('/exam/{exam}/submit', [ExamController::class, 'submit']);
     });
 

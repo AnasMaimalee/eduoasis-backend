@@ -8,14 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class Exam extends BaseModel
 {
     use HasFactory;
+    public $incrementing = false;  // ✅ UUID primary key
+    protected $keyType = 'string';
 
     protected $fillable = [
-        'user_id',
-        'total_questions',
-        'duration_minutes',
-        'status',
-        'started_at',
-        'submitted_at',
+        'id', 'user_id', 'status', 'started_at',
+        'submitted_at', 'duration_minutes',
+        'total_questions', 'total_score'
     ];
 
     protected $casts = [
@@ -24,6 +23,12 @@ class Exam extends BaseModel
     ];
 
     /* ===================== RELATIONSHIPS ===================== */
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            $model->id ??= (string) \Illuminate\Support\Str::uuid();
+        });
+    }
 
     public function user()
     {
