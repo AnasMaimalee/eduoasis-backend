@@ -2,17 +2,17 @@
 
 namespace App\Mail;
 
-use App\Models\PinBindingRequest;
+use App\Models\JambPinBindingRequest;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class PinBindingRejectedMail extends Mailable
+class JambPinBindingRejectedMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public function __construct(
-        public PinBindingRequest $job
+        public JambPinBindingRequest $job
     ) {}
 
     public function build()

@@ -3,7 +3,7 @@
 namespace App\Repositories\PinBinding;
 
 use App\Http\Resources\PinBindingRequestResource;
-use App\Models\PinBindingRequest;
+use App\Models\JambPinBindingRequest;
 
 class PinBindingRepository
 {

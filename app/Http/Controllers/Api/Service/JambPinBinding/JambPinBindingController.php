@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\JambPinBinding\JambPinBindingService;
 use Illuminate\Http\Request;
 use App\Http\Resources\JambPinBindingRequestResource;
-use App\Models\PinBindingRequest;
+use App\Models\JambPinBindingRequest;
 class JambPinBindingController extends Controller
 {
     public function __construct(
@@ -35,7 +35,7 @@ class JambPinBindingController extends Controller
             abort(403, 'Only administrators can view processed jobs');
         }
 
-        $jobs = PinBindingRequest::with([
+        $jobs = JambPinBindingRequest::with([
             'user',
             'service',
             'completedBy.roles',
@@ -98,7 +98,7 @@ class JambPinBindingController extends Controller
     public function myJobs()
     {
         return JambPinBindingRequestResource::collection(
-            PinBindingRequest::where('status', 'processing')
+            JambPinBindingRequest::where('status', 'processing')
                 ->where('taken_by', auth()->id())
                 ->latest()
                 ->get()

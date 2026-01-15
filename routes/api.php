@@ -147,12 +147,12 @@ Route::middleware('auth:api')->group(function () {
      | JAMB Services – Dynamic Routing (FIXED)
      |-------------------------------------------------------------------------- */
     $jambServices = [
-        'jamb-result'                       => JambResultController::class,
-        'jamb-admission-letter'             => JambAdmissionLetterController::class,
-        'jamb-upload-status'                => JambUploadStatusController::class,
-        'jamb-admission-status'             => JambAdmissionStatusController::class,
-        'jamb-admission-result-notification'=> JambAdmissionResultNotificationController::class,
-        'jamb-pin-binding'                   => JambPinBindingController::class,
+        'jamb-result'                           => JambResultController::class,
+        'jamb-admission-letter'                 => JambAdmissionLetterController::class,
+        'jamb-upload-status'                    => JambUploadStatusController::class,
+        'jamb-admission-status'                 => JambAdmissionStatusController::class,
+        'jamb-admission-result-notification'    => JambAdmissionResultNotificationController::class,
+        'jamb-pin-binding'                      => JambPinBindingController::class,
     ];
 
     foreach ($jambServices as $prefix => $controller) {

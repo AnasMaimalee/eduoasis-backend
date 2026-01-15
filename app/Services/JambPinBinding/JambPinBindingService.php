@@ -2,8 +2,8 @@
 
 namespace App\Services\JambPinBinding;
 
-use App\Mail\PinBindingCompletedMail;
-use App\Mail\PinBindingRejectedMail;
+use App\Mail\JambPinBindingCompletedMail;
+use App\Mail\JambPinBindingRejectedMail;
 use App\Mail\WalletDebited;
 use App\Models\User;
 use App\Models\Service;
@@ -167,7 +167,7 @@ class JambPinBindingService
             $job->load(['user', 'service', 'completedBy']);
 
             Mail::to($job->email)->send(
-                new PinBindingCompletedMail($job)
+                new JambPinBindingCompletedMail($job)
             );
 
             return [
@@ -273,7 +273,7 @@ class JambPinBindingService
             ]);
 
             Mail::to($job->email)->send(
-                new PinBindingRejectedMail($job)
+                new JambPinBindingRejectedMail($job)
             );
 
 
