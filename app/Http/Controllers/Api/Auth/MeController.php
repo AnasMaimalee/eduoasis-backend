@@ -284,6 +284,11 @@ class MeController extends Controller
                     'icon' => 'BellOutlined',
                 ],
                 [
+                    'label' => 'JAMB PIN Binding',
+                    'route' => '/user/services/jamb-pin-binding',
+                    'icon' => 'BellOutlined',
+                ],
+                [
                     'label' => 'Settings',
                     'route' => '/user/setting',
                     'icon' => 'SettingOutlined',
@@ -300,6 +305,7 @@ class MeController extends Controller
                 ['label' => 'Admission Status Checking', 'route' => '/administrator/services/jamb-check-admission', 'icon' => 'CheckCircleOutlined'],
                 ['label' => 'JAMB Result Notification', 'route' => '/administrator/services/jamb-result-notification', 'icon' => 'BellOutlined'],
                 ['label' => 'Setting', 'route' => '/administrator/setting', 'icon' => 'SettingOutlined'],
+                ['label' => 'JAMB PIN Binding', 'route' => '/administrator/services/jamb-pin-binding', 'icon' => 'BellOutlined',],
             ],
             'superadmin' => [
                 [
@@ -381,6 +387,11 @@ class MeController extends Controller
                 [
                     'label' => 'JAMB Result Notification',
                     'route' => '/superadmin/services/jamb-result-notification',
+                    'icon' => 'BellOutlined',
+                ],
+                [
+                    'label' => 'JAMB PIN Binding',
+                    'route' => '/superadmin/services/jamb-pin-binding',
                     'icon' => 'BellOutlined',
                 ],
                 [

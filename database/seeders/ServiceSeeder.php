@@ -16,7 +16,9 @@ class ServiceSeeder extends Seeder
             ['name' => 'Checking Admission Status','description' => 'Printing Jamb Admission Status', 'customer_price' => 2000, 'admin_payout' => 1000],
             ['name' => 'JAMB Results Notifications','description' => 'Printing Jamb Result Notification', 'customer_price' => 1500, 'admin_payout' => 800],
             ['name' => 'JAMB Upload Status','description' => 'Printing Jamb Upload Status', 'customer_price' => 2500, 'admin_payout' => 1200],
-        ];
+            ['name' => 'Jamb PIN Binding request','description' => 'Printing jamb PIN Binding', 'customer_price' => 2500, 'admin_payout' => 1200],
+
+            ];
 
         foreach ($services as $s) {
             Service::create([

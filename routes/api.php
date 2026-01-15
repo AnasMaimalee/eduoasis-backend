@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Service\JambPinBinding\JambPinBindingController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\MeController;
 use App\Http\Controllers\Api\Wallet\WalletController;
@@ -151,6 +152,7 @@ Route::middleware('auth:api')->group(function () {
         'jamb-upload-status'                => JambUploadStatusController::class,
         'jamb-admission-status'             => JambAdmissionStatusController::class,
         'jamb-admission-result-notification'=> JambAdmissionResultNotificationController::class,
+        'jamb-pin-binding'                   => JambPinBindingController::class,
     ];
 
     foreach ($jambServices as $prefix => $controller) {
