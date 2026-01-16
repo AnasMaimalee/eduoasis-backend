@@ -51,7 +51,7 @@ use App\Http\Controllers\Api\CBT\SuperAdmin\AdminCbtController;
 Route::prefix('auth')->group(function () {
     Route::post('/register', [MeController::class, 'register']);
     Route::post('/login', [MeController::class, 'login'])
-        ->middleware('throttle:5,1');
+        ->middleware('throttle:login');
 });
 
 // Password Reset
@@ -108,7 +108,7 @@ Route::middleware('auth:api')->group(function () {
     /* |--------------------------------------------------------------------------
      | Administrator & User Management (Superadmin only)
      |-------------------------------------------------------------------------- */
-    Route::middleware('role:superadmin')->group(function () {
+    Route::middleware(['role:superadmin', 'throttle:wallet'])->group(function () {
         Route::get('/administrator', [AdminManagementController::class, 'index']);
         Route::delete('/administrator/{adminId}', [AdminManagementController::class, 'destroy']);
         Route::post('/administrator/{id}/restore', [AdminManagementController::class, 'restore']);
@@ -128,7 +128,7 @@ Route::middleware('auth:api')->group(function () {
     /* |--------------------------------------------------------------------------
      | Wallet
      |-------------------------------------------------------------------------- */
-    Route::prefix('wallet')->middleware('auth:api')->group(function () {
+    Route::prefix('wallet')->group(function () {
         Route::get('/', [WalletController::class, 'index']);
         Route::get('/me', [WalletController::class, 'me']);
         Route::get('/transactions', [WalletController::class, 'transactions']);
@@ -139,7 +139,8 @@ Route::middleware('auth:api')->group(function () {
     /* |--------------------------------------------------------------------------
      | Generic Service Request (if needed elsewhere)
      |-------------------------------------------------------------------------- */
-    Route::post('/service/request', [ServiceRequestController::class, 'request']);
+    Route::post('/service/request', [ServiceRequestController::class, 'request'])
+        ->middleware('throttle:service_request');
 
     /* |--------------------------------------------------------------------------
      | JAMB Services – Dynamic Routing (FIXED)
@@ -169,7 +170,7 @@ Route::middleware('auth:api')->group(function () {
             });
 
             // Superadmin routes
-            Route::middleware('role:superadmin')->group(function () use ($controller) {
+            Route::middleware(['role:superadmin', 'throttle:wallet'])->group(function () use ($controller) {
                 Route::post('/{id}/approve', [$controller, 'approve']);
                 Route::post('/{id}/reject', [$controller, 'reject']);
                 Route::get('/all', [$controller, 'all']);
@@ -202,7 +203,7 @@ Route::middleware('auth:api')->group(function () {
     /* |--------------------------------------------------------------------------
      | Payouts & Bank Accounts
      |-------------------------------------------------------------------------- */
-    Route::middleware('role:administrator')->group(function () {
+    Route::middleware(['role:administrator', 'throttle:wallet'])->group(function () {
         Route::post('/admin/payout/request', [AdminPayoutController::class, 'requestPayout']);
         Route::post('/wallet/payout/request', [AdminPayoutController::class, 'requestPayout']);
     });
@@ -217,7 +218,7 @@ Route::middleware('auth:api')->group(function () {
             Route::post('request', [AdminPayoutController::class, 'requestPayout']);
         });
 
-        Route::middleware('role:superadmin')->group(function () {
+        Route::middleware(['role:superadmin', 'throttle:wallet'])->group(function () {
             Route::get('/request', [AdminPayoutController::class, 'listRequests']);
             Route::post('/{payout}/approve', [AdminPayoutController::class, 'approvePayout']);
             Route::post('/{payout}/reject', [AdminPayoutController::class, 'rejectPayout']);
@@ -231,7 +232,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/wallet/history', [WalletHistoryController::class, 'myHistory']);
     Route::get('/wallet/history/pdf', [WalletHistoryController::class, 'myHistoryPdf']);
 
-    Route::middleware('role:admin|superadmin')->get('/wallet/history/pdf/user/{user}', [WalletHistoryController::class, 'userHistoryPdf']);
+    Route::middleware('role:administrator,superadmin')->get('/wallet/history/pdf/user/{user}', [WalletHistoryController::class, 'userHistoryPdf']);
 
     Route::middleware('role:superadmin')->get('/wallet/history/pdf/all', [WalletHistoryController::class, 'allHistoryPdf']);
 
@@ -342,10 +343,12 @@ Route::middleware('auth:api')->prefix('cbt')->group(function () {
 
         // ---------------- WALLET ----------------
         Route::get('/exam/{exam}/wallet-check', [WalletPaymentController::class, 'check']);
-        Route::post('/exam/{exam}/pay-wallet', [WalletPaymentController::class, 'payAndStart']);
+        Route::post('/exam/{exam}/pay-wallet', [WalletPaymentController::class, 'payAndStart'])
+            ->middleware('throttle:wallet');
 
         // ---------------- REFUND ----------------
-        Route::post('/exam/{exam}/refund', [ExamController::class, 'refundIfUnsubmitted']);
+        Route::post('/exam/{exam}/refund', [ExamController::class, 'refundIfUnsubmitted'])
+            ->middleware('throttle:wallet');
     });
 
     /*
