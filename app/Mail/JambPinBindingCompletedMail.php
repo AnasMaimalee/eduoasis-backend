@@ -6,7 +6,6 @@ use App\Models\JambPinBindingRequest;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use App\Models\JambAdmissionLetterRequest;
 
 class JambPinBindingCompletedMail extends Mailable
 {

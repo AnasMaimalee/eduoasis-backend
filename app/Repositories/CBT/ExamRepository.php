@@ -8,6 +8,7 @@ use App\Models\ExamAttempt;
 use App\Models\Question;
 use App\Models\Subject;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ExamRepository
 {
@@ -135,6 +136,14 @@ class ExamRepository
     public function getAnswer(string $answerId)
     {
         return ExamAnswer::findOrFail($answerId);
+    }
+
+
+    public function getAnswerForExam(string $examId, string $answerId): ExamAnswer
+    {
+        return ExamAnswer::where('id', $answerId)
+            ->where('exam_id', $examId)
+            ->firstOrFail();
     }
 
 }

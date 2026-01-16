@@ -8,36 +8,30 @@ use Illuminate\Database\Eloquent\Model;
 class Exam extends BaseModel
 {
     use HasFactory;
-    public $incrementing = false;  // ✅ UUID primary key
+
+    public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
-        'id', 'user_id', 'status', 'started_at',
-        'submitted_at', 'duration_minutes',
-        'total_questions', 'total_score', 'ends_at'
+        'id',
+        'user_id',
+        'status',
+        'started_at',
+        'ends_at',
+        'submitted_at',
+        'last_seen_at',
+        'duration_minutes',
+        'total_questions',
+        'total_score',
     ];
 
     protected $casts = [
         'started_at'   => 'datetime',
-        'ends_at'      => 'datetime', // ✅ IMPORTANT
+        'ends_at'      => 'datetime',
         'submitted_at' => 'datetime',
-        'fee_paid'     => 'boolean',
-        'fee_refunded' => 'boolean',
+        'last_seen_at' => 'datetime',
     ];
 
-    protected $appends = ['ends_at'];
-
-    public function getEndsAtAttribute()
-    {
-        if (!$this->started_at || !$this->duration_minutes) {
-            return null;
-        }
-
-        return $this->started_at->copy()
-            ->addMinutes($this->duration_minutes);
-    }
-
-    /* ===================== RELATIONSHIPS ===================== */
     protected static function booted()
     {
         static::creating(function ($model) {
@@ -59,5 +53,4 @@ class Exam extends BaseModel
     {
         return $this->hasMany(ExamAnswer::class);
     }
-
 }

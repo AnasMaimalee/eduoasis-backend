@@ -304,8 +304,8 @@ class MeController extends Controller
                 ['label' => 'JAMB Olevel Status', 'route' => '/administrator/services/jamb-olevel-status', 'icon' => 'ProfileOutlined'],
                 ['label' => 'Admission Status Checking', 'route' => '/administrator/services/jamb-check-admission', 'icon' => 'CheckCircleOutlined'],
                 ['label' => 'JAMB Result Notification', 'route' => '/administrator/services/jamb-result-notification', 'icon' => 'BellOutlined'],
-                ['label' => 'Setting', 'route' => '/administrator/setting', 'icon' => 'SettingOutlined'],
                 ['label' => 'JAMB PIN Binding', 'route' => '/administrator/services/jamb-pin-binding', 'icon' => 'BellOutlined',],
+                ['label' => 'Setting', 'route' => '/administrator/setting', 'icon' => 'SettingOutlined'],
             ],
             'superadmin' => [
                 [

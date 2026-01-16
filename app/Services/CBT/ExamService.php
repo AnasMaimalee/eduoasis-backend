@@ -199,5 +199,24 @@ class ExamService
         if ($exam->status !== 'ongoing') {
             throw new RuntimeException('Exam already submitted');
         }
+
+        if (now()->greaterThanOrEqualTo($exam->ends_at)) {
+            $this->submitExam($exam);
+            throw new RuntimeException('Exam time elapsed');
+        }
     }
+
+    public function autoSubmitInactive(): void
+    {
+        Exam::where('status', 'ongoing')
+            ->whereNotNull('last_seen_at')
+            ->where('last_seen_at', '<=', now()->subMinutes(5))
+            ->each(fn ($exam) => $this->submitExam($exam));
+    }
+
+    public function getOngoingExamForUser(string $userId): ?Exam
+    {
+        return $this->examRepository->getOngoingExam($userId);
+    }
+
 }

@@ -7,7 +7,7 @@ use App\Mail\JambPinBindingRejectedMail;
 use App\Mail\WalletDebited;
 use App\Models\User;
 use App\Models\Service;
-use App\Repositories\PinBinding\PinBindingRepository;
+use App\Repositories\JambPinBinding\JambPinBindingRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -16,8 +16,8 @@ use App\Services\WalletService;
 class JambPinBindingService
 {
     public function __construct(
-        protected PinBindingRepository $repo,
-        protected WalletService $walletService
+        protected JambPinBindingRepository $repo,
+        protected WalletService            $walletService
     ) {}
 
     /**
@@ -78,8 +78,6 @@ class JambPinBindingService
             return $this->repo->create([
                 'user_id'             => $user->id,
                 'service_id'          => $service->id,
-                'email'               => $data['email'],
-                'phone_number'        => $data['phone_number'] ?? null,
                 'profile_code'        => $data['profile_code'],
                 'customer_price'      => $service->customer_price,
                 'admin_payout'        => $service->admin_payout,
@@ -166,19 +164,16 @@ class JambPinBindingService
 
             $job->load(['user', 'service', 'completedBy']);
 
-            Mail::to($job->email)->send(
+            Mail::to($job->user->email)->send(
                 new JambPinBindingCompletedMail($job)
             );
+
 
             return [
                 'message' => 'Job completed and awaiting superadmin approval',
                 'job' => [
                     'id'               => $job->id,
                     'status'           => $job->status,
-                    'user'             => [
-                        'name'  => $job->user->name,
-                        'email' => $job->user->email,
-                    ],
                     'service'          => $job->service->name,
                     'completed_by'     => $job->completedBy->name,
                     'result_file_url'  => asset('storage/' . $job->result_file),

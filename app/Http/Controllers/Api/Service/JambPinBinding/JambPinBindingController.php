@@ -82,10 +82,7 @@ class JambPinBindingController extends Controller
     {
 
         $data = $request->validate([
-            'email' => 'required|email',
-            'phone_number' => 'required|string',
             'profile_code' => 'required|string',
-            'registration_number' => 'nullable|string',
         ]);
 
         return response()->json(

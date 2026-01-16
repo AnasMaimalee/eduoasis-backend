@@ -8,12 +8,9 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 class Kernel extends HttpKernel
 {
     /**
-     * The application's global HTTP middleware stack.
-     *
-     * @var array<int, class-string|string>
+     * Global HTTP middleware stack.
      */
     protected $middleware = [
-        // Global middleware
         \App\Http\Middleware\TrustProxies::class,
         \Illuminate\Http\Middleware\HandleCors::class,
         \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
@@ -23,9 +20,7 @@ class Kernel extends HttpKernel
     ];
 
     /**
-     * The application's route middleware groups.
-     *
-     * @var array<string, array<int, class-string|string>>
+     * Route middleware groups.
      */
     protected $middlewareGroups = [
         'api' => [
@@ -35,27 +30,15 @@ class Kernel extends HttpKernel
     ];
 
     /**
-     * The application's route middleware.
-     *
-     * @var array<string, class-string|string>
+     * Route middleware aliases.
      */
     protected $routeMiddleware = [
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 
-        // ✅ Your custom CBT middleware
+        // ✅ CBT middleware
         'verify.exam.session' => \App\Http\Middleware\VerifyExamSession::class,
+        'cbt.last.seen' => \App\Http\Middleware\UpdateExamLastSeen::class,
+
     ];
-
-
-    protected $commands = [
-        \App\Console\Commands\AutoSubmitExpiredExams::class,
-    ];
-    protected function schedule(\Illuminate\Console\Scheduling\Schedule $schedule)
-    {
-        $schedule->command('cbt:auto-submit-expired-exams')
-            ->everyMinute()
-            ->withoutOverlapping();
-    }
-
 }

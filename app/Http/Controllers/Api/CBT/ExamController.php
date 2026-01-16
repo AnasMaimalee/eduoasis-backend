@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\CBT;
 
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
+use App\Repositories\CBT\ExamRepository;
 use Illuminate\Http\Request;
 use App\Services\CBT\ExamService;
 use App\Services\CBT\WalletPaymentService;
@@ -12,6 +13,7 @@ class ExamController extends Controller
 {
     public function __construct(
         protected ExamService $examService,
+        protected ExamRepository $examRepository,
         protected WalletPaymentService $walletService
     ) {}
 
@@ -201,6 +203,45 @@ class ExamController extends Controller
             'answered_questions' => $answered,
             'unanswered_questions' => $totalQuestions - $answered,
             'is_completed' => $exam->status !== 'ongoing',
+        ]);
+    }
+    public function resume(Request $request)
+    {
+        $user = $request->user();
+
+        $exam = $this->examRepository->findOngoingExam($user->id);
+
+        if (!$exam) {
+            return response()->json([
+                'message' => 'No ongoing exam'
+            ], 404);
+        }
+
+        return response()->json([
+            'message' => 'Exam resumed',
+            'data' => [
+                'exam_id'        => $exam->id,
+                'started_at'     => $exam->started_at,
+                'ends_at'        => $exam->ends_at,
+                'remaining_time' => max(
+                    0,
+                    now()->diffInSeconds($exam->ends_at, false)
+                )
+            ]
+        ]);
+    }
+    public function time(Request $request)
+    {
+        $exam = $this->examService
+            ->getOngoingExamForUser($request->user()->id);
+
+        abort_if(!$exam, 404, 'No ongoing exam');
+
+        return response()->json([
+            'remaining_seconds' => max(
+                0,
+                now()->diffInSeconds($exam->ends_at, false)
+            )
         ]);
     }
 

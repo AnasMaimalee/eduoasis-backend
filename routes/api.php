@@ -35,8 +35,6 @@ use App\Http\Controllers\Api\Profile\ProfileController;
  * */
 
 use App\Http\Controllers\Api\CBT\ExamController;
-use App\Http\Controllers\Api\CBT\AnswerController;
-use App\Http\Controllers\Api\CBT\SubmitExamController;
 use App\Http\Controllers\Api\CBT\ResultController;
 use App\Http\Controllers\Api\CBT\SuperAdmin\QuestionUploadController;
 use App\Http\Controllers\Api\CBT\SuperAdmin\QuestionBankController;
@@ -44,9 +42,9 @@ use App\Http\Controllers\Api\CBT\WalletPaymentController;
 use App\Http\Controllers\Api\CBT\ExamTimerController;
 use App\Http\Controllers\Api\CBT\NotificationController;
 use App\Http\Controllers\Api\CBT\SubjectController;
-use App\Http\Controllers\Api\CBT\RankingController;
 use App\Http\Controllers\Api\CBT\LeaderboardController;
-use App\Services\CBT\LeaderboardService;
+use App\Http\Controllers\Api\CBT\SuperAdmin\AdminCbtController;
+
 /* |--------------------------------------------------------------------------
  | Public Auth Routes
  |-------------------------------------------------------------------------- */
@@ -277,7 +275,6 @@ Route::get('/download-storage/{path}', function (string $path) {
 | CBT Routes (Clean & Unified)
 |--------------------------------------------------------------------------
 */
-
 Route::middleware('auth:api')->prefix('cbt')->group(function () {
 
     /*
@@ -307,6 +304,9 @@ Route::middleware('auth:api')->prefix('cbt')->group(function () {
         Route::get('/questions', [QuestionBankController::class, 'index']);
         Route::get('/questions/{question}/preview', [QuestionBankController::class, 'preview']);
 
+        // Live CBT monitoring
+        Route::get('/live', [AdminCbtController::class, 'live']);
+
         // Leaderboard (global)
         Route::get('/leaderboard', [LeaderboardController::class, 'index']);
     });
@@ -316,24 +316,21 @@ Route::middleware('auth:api')->prefix('cbt')->group(function () {
     | USER CBT EXAM FLOW
     |--------------------------------------------------------------------------
     */
-    Route::middleware('role:user')->prefix('user')->group(function () {
+    Route::middleware(['role:user', 'cbt.last.seen'])->prefix('user')->group(function () {
 
         // ---------------- EXAM LIFECYCLE ----------------
         Route::post('/exam/start', [ExamController::class, 'start']);
         Route::get('/exam/ongoing', [ExamController::class, 'ongoingExams']);
         Route::get('/exam/{exam}', [ExamController::class, 'show']);
         Route::get('/exam/{exam}/meta', [ExamController::class, 'meta']);
+        Route::get('/exam/resume', [ExamController::class, 'resume']);
+        Route::get('/exam/time', [ExamController::class, 'time']);
 
         Route::post('/exam/{exam}/submit', [ExamController::class, 'submit']);
         Route::post('/exam/{exam}/auto-submit', [ExamController::class, 'autoSubmitExam']);
 
         // ---------------- ANSWERS ----------------
-        Route::middleware('verify.exam.session')->group(function () {
-            Route::post(
-                '/exam/{exam}/answer/{answer}',
-                [ExamController::class, 'submitAnswer']
-            );
-        });
+        Route::post('/exam/{exam}/answer/{answer}', [ExamController::class, 'submitAnswer']);
 
         // ---------------- RESULTS ----------------
         Route::get('/results/{exam}', [ResultController::class, 'show']);
@@ -356,7 +353,7 @@ Route::middleware('auth:api')->prefix('cbt')->group(function () {
     | TIMER / HEARTBEAT (SECURED)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:user', 'verify.exam.session'])->group(function () {
+    Route::middleware(['role:user', 'verify.exam.session', 'cbt.last.seen'])->group(function () {
         Route::post('/exam/{exam}/heartbeat', [ExamTimerController::class, 'heartbeat']);
         Route::post('/exam/{exam}/check-time', [ExamTimerController::class, 'checkAndSubmit']);
     });

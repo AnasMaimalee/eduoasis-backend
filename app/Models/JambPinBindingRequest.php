@@ -15,8 +15,6 @@ class JambPinBindingRequest extends Model
         'user_id',
         'service_id',
 
-        'email',
-        'phone_number',
         'profile_code',
 
         'customer_price',
