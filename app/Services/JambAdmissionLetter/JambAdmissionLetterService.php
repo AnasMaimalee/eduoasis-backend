@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Repositories\JambAdmissionLetter\JambAdmissionLetterRepository;
 use App\Services\WalletService;
-
+use App\Models\JambAdmissionLetterRequest;
 class JambAdmissionLetterService
 {
     public function __construct(
@@ -43,38 +43,27 @@ class JambAdmissionLetterService
         }
 
         $superAdmin = User::role('superadmin')->first();
-
-        if (! $superAdmin) {
+        if (!$superAdmin) {
             abort(500, 'Super admin not configured');
         }
 
-        // Unique group reference
-        $groupReference = 'jamb_admission_letter_' . Str::uuid();
+        $groupReference = 'jamb_admission_' . Str::uuid();
 
-        // Capture debit transaction for email
-        $debitTransaction = null;
-        $createdRequest = null;
+        // Capture transaction for email
+        $transactions = null;
 
-        $createdRequest = DB::transaction(function () use (
-            $user, $data, $service, $superAdmin, $groupReference, &$debitTransaction
-        ) {
-            // 1. Debit user wallet
-            $debitTransaction = $this->walletService->debitUser(
-                $user,
-                $service->customer_price,
-                'Purchase: JAMB Admission Letter',
-                $groupReference
+        $createdRequest = DB::transaction(function () use ($user, $data, $service, $superAdmin, $groupReference, &$transactions) {
+
+            // ✅ SINGLE SERVICE PAYMENT
+            $transactions = $this->walletService->servicePayment(
+                customer: $user,
+                platform: $superAdmin,
+                amount: $service->customer_price,
+                description: 'Purchase: JAMB Admission Letter',
+                groupReference: $groupReference
             );
 
-            // 2. Credit platform (superadmin)
-            $this->walletService->creditUser(
-                $superAdmin,
-                $service->customer_price,
-                'Payment received: JAMB Admission Letter (User: ' . $user->name . ')',
-                $groupReference
-            );
-
-            // 3. Create request with platform_profit
+            // Create the request
             return $this->repo->create([
                 'user_id'             => $user->id,
                 'service_id'          => $service->id,
@@ -91,21 +80,23 @@ class JambAdmissionLetterService
         });
 
         // Send debit confirmation email to user
-        Mail::to($user->email)->send(
-            new WalletDebited(
-                user: $user,
-                amount: $service->customer_price,
-                balance: $debitTransaction->balance_after,
-                reason: 'Purchase: JAMB Admission Letter'
-            )
-        );
+        if ($transactions && $transactions['debit_transaction']) {
+            Mail::to($user->email)->send(
+                new WalletDebited(
+                    user: $user,
+                    amount: $service->customer_price,
+                    balance: $transactions['debit_transaction']->balance_after,
+                    reason: 'Purchase: JAMB Admission Letter'
+                )
+            );
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Your work has been successfully submitted.',
         ], 201);
-
     }
+
 
     /**
      * ======================
@@ -198,49 +189,51 @@ class JambAdmissionLetterService
     // ✅ SERVICE - FIXED (Replace your approve method completely)
     public function approve(string $id, User $superAdmin)
     {
-        if (! auth()->user()->hasRole('superadmin')) {
+        if (! $superAdmin->hasRole('superadmin')) {
             abort(403, 'Unauthorized financial action');
         }
 
         return DB::transaction(function () use ($id, $superAdmin) {
-            $job = $this->repo->find($id);
+            $job = JambAdmissionLetterRequest::where('id', $id)
+                ->lockForUpdate() // 🔒 CRITICAL
+                ->firstOrFail();
 
             if ($job->status !== 'completed') {
                 abort(422, 'Job is not ready for approval');
             }
 
-            if ($job->status === 'approved') {
-                abort(422, 'Job already approved');
+            if ($job->is_paid) {
+                abort(409, 'Job already paid');
             }
 
-            if (!$job->completedBy) {
-                abort(422, 'Administrator who completed the job not found');
+            if (! $job->completedBy) {
+                abort(422, 'Admin not found');
             }
 
-            // ✅ FIXED: DEBIT SUPERADMIN WALLET → CREDIT ADMIN
+            $groupRef = 'adm_letter_payout_' . $job->id;
+
+            // 🔒 PAY ADMIN FROM SUPERADMIN
             $this->walletService->adminCreditUser(
-                $superAdmin,                    // Superadmin (verification ONLY)
-                $job->completedBy,             // Admin who gets PAID
-                $job->admin_payout,            // PAYOUT AMOUNT
-                'Payment for JAMB Admission Letter service (Request #' . $job->id . ')'
+                $superAdmin,
+                $job->completedBy,
+                $job->admin_payout,
+                'Payment for JAMB Admission Letter #' . $job->id
             );
 
             $job->update([
                 'status'          => 'approved',
-                'is_paid'          => true,
+                'is_paid'         => true,
                 'approved_by'     => $superAdmin->id,
                 'platform_profit' => $job->customer_price - $job->admin_payout,
             ]);
 
             return [
-                'message'         => 'Job approved and administrator paid from superadmin wallet',
-                'job_id'          => $job->id,
-                'admin_paid'      => $job->admin_payout,
-                'platform_profit' => $job->platform_profit,
-                'wallet_flow'     => 'SuperAdmin → Admin'
+                'message' => 'Approved & admin paid securely',
+                'job_id'  => $job->id,
             ];
         });
     }
+
 
     public function reject(string $id, string $reason, User $superAdmin)
     {

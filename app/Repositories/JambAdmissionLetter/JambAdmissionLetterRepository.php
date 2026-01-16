@@ -3,7 +3,7 @@
 namespace App\Repositories\JambAdmissionLetter;
 
 use App\Models\JambAdmissionLetterRequest;
-
+use App\Models\Wallet;
 class JambAdmissionLetterRepository
 {
     public function create(array $data)
@@ -11,6 +11,14 @@ class JambAdmissionLetterRepository
         return JambAdmissionLetterRequest::create($data);
     }
 
+    public function getAll()
+    {
+        return JambAdmissionLetterRequest::with([
+            'user:id,name,email'
+        ])
+            ->latest()
+            ->get();
+    }
     public function find(string $id)
     {
         return JambAdmissionLetterRequest::findOrFail($id);
@@ -39,4 +47,17 @@ class JambAdmissionLetterRepository
             'rejectedBy',
         ])->latest()->get();
     }
+
+    public function getByUserIdForUpdate(string $userId)
+    {
+        return Wallet::where('user_id', $userId)->lockForUpdate()->firstOrFail();
+    }
+    public function findForUpdate(string $id)
+    {
+        return JambAdmissionLetterRequest::where('id', $id)
+            ->lockForUpdate()
+            ->firstOrFail();
+    }
+
+
 }
