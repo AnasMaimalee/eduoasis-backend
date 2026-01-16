@@ -37,44 +37,26 @@ class JambAdmissionStatusService
             ->whereRaw('LOWER(name) = ?', [strtolower('Checking Admission Status')])
             ->firstOrFail();
 
-        // Balance check
         if ($user->wallet->balance < $service->customer_price) {
             abort(422, 'Insufficient wallet balance');
         }
 
-        $superAdmin = User::role('superadmin')->first();
+        $superAdmin = User::role('superadmin')->firstOrFail();
 
-        if (! $superAdmin) {
-            abort(500, 'Super admin not configured');
-        }
-
-        // Unique group reference for linking debit + credit
         $groupReference = 'jamb_admission_status_' . Str::uuid();
-
-        // Capture debit transaction for email
         $debitTransaction = null;
-        $createdRequest = null;
 
-        $createdRequest = DB::transaction(function () use (
-            $user, $data, $service, $superAdmin, $groupReference, &$debitTransaction
-        ) {
-            // 1. Debit user wallet
-            $debitTransaction = $this->walletService->debitUser(
-                $user,
-                $service->customer_price,
-                'Purchase: JAMB Admission Status Check',
-                $groupReference
-            );
+        $createdRequest = DB::transaction(function () use ($user, $data, $service, $superAdmin, $groupReference, &$debitTransaction) {
+            // Debit user and credit platform
+            $debitTransaction = $this->walletService->servicePayment(
+                customer: $user,
+                platform: $superAdmin,
+                amount: $service->customer_price,
+                description: 'Purchase: JAMB Admission Status Check',
+                groupReference: $groupReference
+            )['debit_transaction'];
 
-            // 2. Credit platform (superadmin wallet)
-            $this->walletService->creditUser(
-                $superAdmin,
-                $service->customer_price,
-                'Payment received: JAMB Admission Status (User: ' . $user->name . ')',
-                $groupReference
-            );
-
-            // 3. Create the request
+            // Create secure request
             return $this->repo->create([
                 'user_id'             => $user->id,
                 'service_id'          => $service->id,
@@ -84,13 +66,12 @@ class JambAdmissionStatusService
                 'registration_number' => $data['registration_number'] ?? null,
                 'customer_price'      => $service->customer_price,
                 'admin_payout'        => $service->admin_payout,
-                'platform_profit'     => $service->customer_price - $service->admin_payout, // ← ADD THIS
+                'platform_profit'     => $service->customer_price - $service->admin_payout,
                 'status'              => 'pending',
                 'is_paid'             => false,
             ]);
         });
 
-        // Send debit confirmation email to user (after successful transaction)
         Mail::to($user->email)->send(
             new WalletDebited(
                 user: $user,
@@ -102,10 +83,9 @@ class JambAdmissionStatusService
 
         return response()->json([
             'success' => true,
-            'message' => 'Your work has been successfully submitted.',
+            'message' => 'Your request has been successfully submitted.',
         ], 201);
     }
-
 
     /**
      * ======================
@@ -115,19 +95,13 @@ class JambAdmissionStatusService
 
     public function pending()
     {
-        if (! auth()->user()->hasRole('administrator')) {
-            abort(403, 'Unauthorized action');
-        }
-
+        $this->checkRole('administrator');
         return $this->repo->pending();
     }
 
     public function take(string $id, User $admin)
     {
-        if (! auth()->user()->hasRole('administrator')) {
-            abort(403, 'Unauthorized action');
-        }
-
+        $this->checkRole('administrator');
         $job = $this->repo->find($id);
 
         if ($job->status !== 'pending') {
@@ -144,20 +118,13 @@ class JambAdmissionStatusService
 
     public function complete(string $id, string $filePath, User $admin)
     {
-        if (! auth()->user()->hasRole('administrator')) {
-            abort(403, 'Unauthorized action');
-        }
+        $this->checkRole('administrator');
 
         return DB::transaction(function () use ($id, $filePath, $admin) {
             $job = $this->repo->find($id);
 
-            if ($job->taken_by !== $admin->id) {
-                abort(403, 'You did not take this job');
-            }
-
-            if ($job->status !== 'processing') {
-                abort(422, 'Job is not in processing state');
-            }
+            if ($job->taken_by !== $admin->id) abort(403, 'You did not take this job');
+            if ($job->status !== 'processing') abort(422, 'Job is not in processing state');
 
             $job->update([
                 'status'       => 'completed',
@@ -167,7 +134,6 @@ class JambAdmissionStatusService
 
             $job->load(['user', 'service', 'completedBy']);
 
-            // Notify user that result is ready (awaiting approval)
             Mail::to($job->email)->send(
                 new JambAdmissionStatusCompletedMail($job)
             );
@@ -177,10 +143,7 @@ class JambAdmissionStatusService
                 'job' => [
                     'id'               => $job->id,
                     'status'           => $job->status,
-                    'user'             => [
-                        'name'  => $job->user->name,
-                        'email' => $job->user->email,
-                    ],
+                    'user'             => ['name' => $job->user->name, 'email' => $job->user->email],
                     'service'          => $job->service->name,
                     'completed_by'     => $job->completedBy->name,
                     'result_file_url'  => asset('storage/' . $job->result_file),
@@ -192,42 +155,31 @@ class JambAdmissionStatusService
 
     /**
      * ======================
-     * SUPER ADMIN
+     * SUPERADMIN
      * ======================
      */
 
     public function approve(string $id, User $superAdmin)
     {
-        if (! auth()->user()->hasRole('superadmin')) {
-            abort(403, 'Unauthorized financial action');
-        }
+        $this->checkRole('superadmin');
 
         return DB::transaction(function () use ($id, $superAdmin) {
             $job = $this->repo->find($id);
 
-            if ($job->status !== 'completed') {
-                abort(422, 'Job is not ready for approval');
-            }
+            if ($job->status !== 'completed') abort(422, 'Job not ready for approval');
+            if ($job->is_paid) abort(409, 'Job already paid');
+            if (!$job->completedBy) abort(422, 'Admin not found for this job');
 
-            if ($job->status === 'approved') {
-                abort(422, 'Job already approved');
-            }
-
-            if (!$job->completedBy) {
-                abort(422, 'Administrator who completed the job not found');
-            }
-
-            // ✅ FIXED: DEBIT SUPERADMIN WALLET → CREDIT ADMIN
             $this->walletService->adminCreditUser(
-                $superAdmin,                          // Superadmin (verification ONLY)
-                $job->completedBy,                   // Admin who gets PAID
-                $job->admin_payout,                  // PAYOUT AMOUNT
-                'Payment for JAMB service (Request #' . $job->id . ')'
+                $superAdmin,
+                $job->completedBy,
+                $job->admin_payout,
+                'Payment for JAMB Admission Status service (Request #' . $job->id . ')'
             );
 
             $job->update([
                 'status'          => 'approved',
-                'is_paid'          => true,
+                'is_paid'         => true,
                 'approved_by'     => $superAdmin->id,
                 'platform_profit' => $job->customer_price - $job->admin_payout,
             ]);
@@ -237,28 +189,23 @@ class JambAdmissionStatusService
                 'job_id'          => $job->id,
                 'admin_paid'      => $job->admin_payout,
                 'platform_profit' => $job->platform_profit,
+                'wallet_flow'     => 'SuperAdmin → Admin',
             ];
         });
     }
 
     public function reject(string $id, string $reason, User $superAdmin)
     {
-        if (! auth()->user()->hasRole('superadmin')) {
-            abort(403, 'Unauthorized financial action');
-        }
+        $this->checkRole('superadmin');
 
         return DB::transaction(function () use ($id, $reason, $superAdmin) {
             $job = $this->repo->find($id);
 
-            if ($job->status === 'rejected') {
-                abort(422, 'Job already rejected');
-            }
-
-            if (!in_array($job->status, ['completed_by_admin', 'processing'])) {
+            if ($job->status === 'rejected') abort(422, 'Job already rejected');
+            if (!in_array($job->status, ['completed', 'processing'])) {
                 abort(422, 'Job cannot be rejected at this stage');
             }
 
-            // Refund user from platform wallet
             $this->walletService->transfer(
                 $superAdmin,
                 $job->user,
@@ -272,12 +219,10 @@ class JambAdmissionStatusService
                 'rejection_reason' => $reason,
             ]);
 
-            // Notify user
             Mail::to($job->email)->send(
                 new JambAdmissionStatusRejectedMail($job)
             );
 
-            // Notify admin (optional but recommended)
             if ($job->completedBy) {
                 Mail::to($job->completedBy->email)->send(
                     new JambAdmissionStatusRejectedMail($job)
@@ -295,10 +240,19 @@ class JambAdmissionStatusService
 
     public function all()
     {
-        if (! auth()->user()->hasRole('superadmin')) {
+        $this->checkRole('superadmin');
+        return $this->repo->allWithRelations();
+    }
+
+    /**
+     * ======================
+     * PRIVATE HELPERS
+     * ======================
+     */
+    private function checkRole(string $role)
+    {
+        if (! auth()->user()->hasRole($role)) {
             abort(403, 'Unauthorized action');
         }
-
-        return $this->repo->allWithRelations();
     }
 }
