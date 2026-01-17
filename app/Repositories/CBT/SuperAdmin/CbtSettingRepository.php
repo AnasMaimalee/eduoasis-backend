@@ -3,27 +3,29 @@
 namespace App\Repositories\CBT\SuperAdmin;
 
 use App\Models\CbtSetting;
+use Illuminate\Support\Str;
 
 class CbtSettingRepository
 {
+    private const GLOBAL_ID = 'cbt-settings-global';
+
     public function get(): CbtSetting
     {
-        return CbtSetting::getSettings();
+        return CbtSetting::firstOrCreate(
+            ['id' => self::GLOBAL_ID],
+            [
+                'subjects_count' => 4,
+                'questions_per_subject' => 15,
+                'duration_minutes' => 120,
+                'exam_fee' => 0,
+            ]
+        );
     }
 
-    public function update(array $data): bool
+    public function update(array $data): CbtSetting
     {
         $settings = $this->get();
-        return $settings->update($data);
-    }
-
-    public function validateData(array $data): array
-    {
-        return [
-            'subjects_count' => $data['subjects_count'] ?? 4,
-            'questions_per_subject' => $data['questions_per_subject'] ?? 15,
-            'duration_minutes' => $data['duration_minutes'] ?? 120,
-            'exam_fee' => (float) ($data['exam_fee'] ?? 0),
-        ];
+        $settings->update($data);
+        return $settings->fresh();
     }
 }

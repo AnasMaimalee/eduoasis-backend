@@ -7,6 +7,8 @@ use App\Observers\UserObserver;
 use App\Services\WalletService;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
+use App\Repositories\CBT\SuperAdmin\CbtSettingRepository;
+use App\Repositories\CBT\SuperAdmin\CbtSettingRepositoryInterface;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -18,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
             // OR simply: return resolve(WalletService::class);
         });
 
+        $this->app->bind(
+            CbtSettingRepositoryInterface::class,
+            CbtSettingRepository::class
+        );
         // Alternative (cleaner): Just bind as singleton directly
         // $this->app->singleton(WalletService::class);
     }
@@ -30,4 +36,5 @@ class AppServiceProvider extends ServiceProvider
 
         User::observe(UserObserver::class);
     }
+
 }

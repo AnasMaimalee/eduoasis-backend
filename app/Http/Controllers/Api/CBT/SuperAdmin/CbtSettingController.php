@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\CBT\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Services\Cbt\CbtSettingService;
+use App\Http\Requests\CBT\SuperAdmin\UpdateCbtSettingsRequest;
+use App\Services\CBT\SuperAdmin\CbtSettingService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class CbtSettingController extends Controller
 {
@@ -13,41 +13,20 @@ class CbtSettingController extends Controller
         private CbtSettingService $service
     ) {}
 
-    /**
-     * Get CBT Settings
-     */
     public function index(): JsonResponse
     {
         return response()->json([
             'success' => true,
-            'data' => $this->service->getSettings(),
+            'data' => $this->service->fetch(),
         ]);
     }
 
-    /**
-     * Update CBT Settings
-     */
-    public function update(Request $request): JsonResponse
+    public function update(UpdateCbtSettingsRequest $request): JsonResponse
     {
-        try {
-            $updated = $this->service->updateSettings($request->all());
-
-            return response()->json([
-                'success' => true,
-                'message' => 'CBT settings updated successfully!',
-                'data' => $updated,
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update settings',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Settings updated successfully!',
+            'data' => $this->service->update($request->validated()),
+        ]);
     }
 }

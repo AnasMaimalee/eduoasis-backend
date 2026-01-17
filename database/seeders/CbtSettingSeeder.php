@@ -14,7 +14,7 @@ class CbtSettingSeeder extends Seeder
             'subjects_count' => 4,
             'questions_per_subject' => 25,
             'duration_minutes' => 120,
-            'exam_fee' => 1000,
+            'exam_fee' => 100,
         ]);
     }
 }

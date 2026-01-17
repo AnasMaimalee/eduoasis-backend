@@ -2,13 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class CbtSetting extends Model
 {
     use HasFactory;
+
+    protected $table = 'cbt_settings';
+    protected $primaryKey = 'id';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
         'subjects_count',
@@ -21,11 +25,6 @@ class CbtSetting extends Model
         'subjects_count' => 'integer',
         'questions_per_subject' => 'integer',
         'duration_minutes' => 'integer',
-        'exam_fee' => 'decimal:2',
+        'exam_fee' => 'float',
     ];
-
-    public static function getSettings(): self
-    {
-        return self::firstOrCreate([]);
-    }
 }
