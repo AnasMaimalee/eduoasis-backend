@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\Profile\ProfileController;
  * */
 
 use App\Http\Controllers\Api\CBT\ExamController;
+use App\Http\Controllers\Api\CBT\SuperAdmin\ExamManagementController;
 use App\Http\Controllers\Api\CBT\ResultController;
 use App\Http\Controllers\Api\CBT\SuperAdmin\QuestionUploadController;
 use App\Http\Controllers\Api\CBT\SuperAdmin\QuestionBankController;
@@ -296,6 +297,21 @@ Route::middleware('auth:api')->prefix('cbt')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::middleware('role:superadmin')->prefix('superadmin')->group(function () {
+        /*
+         * Exam Management Super Admin
+         * */
+
+        Route::get('/exams', [ExamManagementController::class, 'index']);
+        Route::get('/exams/{exam}', [ExamManagementController::class, 'show']);
+        Route::get('/exams/{exam}/answers', [ExamManagementController::class, 'answers']);
+        Route::get('/exams/{exam}/score', [ExamManagementController::class, 'score']);
+        Route::get('/exams/{exam}/analytics', [ExamManagementController::class, 'analytics']);
+        Route::get('/rankings', [ExamManagementController::class, 'rankings']);
+
+        Route::post('/exams/{exam}/invalidate', [ExamManagementController::class, 'invalidate']);
+        Route::post('/exams/{exam}/remark', [ExamManagementController::class, 'remark']);
+        Route::get('/cbt/superadmin/rankings/subject/{subjectId}', [ExamManagementController::class, 'rankingsBySubject']);
+        Route::get('/exams/{exam}/pdf', [ExamManagementController::class, 'examPdf']);
 
         // Subjects
         Route::post('/subjects', [SubjectController::class, 'store']);
@@ -314,6 +330,9 @@ Route::middleware('auth:api')->prefix('cbt')->group(function () {
 
         Route::get('/settings', [CbtSettingController::class, 'index']);
         Route::put('/settings', [CbtSettingController::class, 'update']);
+
+
+
     });
 
     /*
