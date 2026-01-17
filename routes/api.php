@@ -46,7 +46,7 @@ use App\Http\Controllers\Api\CBT\SubjectController;
 use App\Http\Controllers\Api\CBT\LeaderboardController;
 use App\Http\Controllers\Api\CBT\SuperAdmin\AdminCbtController;
 use App\Http\Controllers\Api\CBT\SuperAdmin\CbtSettingController;
-
+use App\Http\Controllers\Api\CBT\SuperAdmin\LiveCbtController;
 /* |--------------------------------------------------------------------------
  | Public Auth Routes
  |-------------------------------------------------------------------------- */
@@ -302,6 +302,7 @@ Route::middleware('auth:api')->prefix('cbt')->group(function () {
          * */
 
         Route::get('/exams', [ExamManagementController::class, 'index']);
+        Route::get('/live', [AdminCbtController::class, 'live']);
         Route::get('/exams/{exam}', [ExamManagementController::class, 'show']);
         Route::get('/exams/{exam}/answers', [ExamManagementController::class, 'answers']);
         Route::get('/exams/{exam}/score', [ExamManagementController::class, 'score']);
@@ -310,8 +311,12 @@ Route::middleware('auth:api')->prefix('cbt')->group(function () {
 
         Route::post('/exams/{exam}/invalidate', [ExamManagementController::class, 'invalidate']);
         Route::post('/exams/{exam}/remark', [ExamManagementController::class, 'remark']);
-        Route::get('/cbt/superadmin/rankings/subject/{subjectId}', [ExamManagementController::class, 'rankingsBySubject']);
-        Route::get('/exams/{exam}/pdf', [ExamManagementController::class, 'examPdf']);
+        Route::get('/rankings/subject/{subjectId}', [ExamManagementController::class, 'rankingsBySubject']);
+        Route::get('/exams/{exam}/pdf', [ResultController::class, 'downloadResult']);
+
+        /*
+         * Live CBT
+         * */
 
         // Subjects
         Route::post('/subjects', [SubjectController::class, 'store']);

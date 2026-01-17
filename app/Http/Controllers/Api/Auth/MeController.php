@@ -343,12 +343,12 @@ class MeController extends Controller
                             'icon' => 'FormOutlined',
                         ],
                         [
-                            'label' => 'Exams',
+                            'label' => 'Exams Management',
                             'route' => '/superadmin/cbt/exams',
                             'icon' => 'ClockCircleOutlined',
                         ],
                         [
-                            'label' => 'Analytics',
+                            'label' => 'Live Exams',
                             'route' => '/superadmin/cbt/analytics',
                             'icon' => 'BarChartOutlined',
                         ],

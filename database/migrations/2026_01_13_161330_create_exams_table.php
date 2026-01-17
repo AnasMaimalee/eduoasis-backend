@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->boolean('fee_paid')->default(false); // fee has been successfully debited
             $table->boolean('fee_refunded')->default(false); // fee refunded due to network issues
 
-            $table->enum('status', ['ongoing', 'submitted'])->default('ongoing');
+            $table->enum('status', ['ongoing', 'submitted', 'invalidated'])->default('ongoing');
             $table->timestamp('started_at')->nullable();
             $table->timestamp('submitted_at')->nullable();
             $table->timestamps();

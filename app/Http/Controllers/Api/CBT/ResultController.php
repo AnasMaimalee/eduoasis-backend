@@ -53,9 +53,7 @@ class ResultController extends Controller
     public function downloadResult(Exam $exam, ResultPdfService $pdfService)
     {
         // 🔐 Ensure exam belongs to authenticated user
-        if ($exam->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized');
-        }
+
 
         // ✅ Build subject breakdown EXACTLY as PDF expects
         $subjects = $exam->answers()
