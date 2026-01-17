@@ -43,57 +43,63 @@ class JambPinBindingService
         }
 
         $superAdmin = User::role('superadmin')->first();
-
         if (! $superAdmin) {
             abort(500, 'Super admin not configured');
         }
 
-        // Unique group reference
-        $groupReference = 'jamb_pin_binding_' . Str::uuid();
+        // Base reference for grouping (NOT used directly in wallet)
+        $baseReference = 'jamb_pin_binding_' . Str::uuid();
 
-        // Capture debit transaction for email
         $debitTransaction = null;
-        $createdRequest = null;
 
-        $createdRequest = DB::transaction(function () use (
-            $user, $data, $service, $superAdmin, $groupReference, &$debitTransaction
+        DB::transaction(function () use (
+            $user,
+            $data,
+            $service,
+            $superAdmin,
+            $baseReference,
+            &$debitTransaction
         ) {
-            // 1. Debit user wallet
+            // ✅ UNIQUE REFERENCES PER TRANSACTION
+            $debitReference  = $baseReference . '_debit';
+            $creditReference = $baseReference . '_credit';
+
+            // 1️⃣ Debit user wallet
             $debitTransaction = $this->walletService->debitUser(
                 $user,
                 $service->customer_price,
                 'Purchase: JAMB PIN Binding',
-                $groupReference
+                $debitReference
             );
 
-            // 2. Credit platform (superadmin)
+            // 2️⃣ Credit platform (superadmin)
             $this->walletService->creditUser(
                 $superAdmin,
                 $service->customer_price,
                 'Payment received: JAMB PIN Binding (User: ' . $user->name . ')',
-                $groupReference
+                $creditReference
             );
 
-            // 3. Create request with platform_profit
-            return $this->repo->create([
-                'user_id'             => $user->id,
-                'service_id'          => $service->id,
-                'profile_code'        => $data['profile_code'],
-                'customer_price'      => $service->customer_price,
-                'admin_payout'        => $service->admin_payout,
-                'platform_profit'     => $service->customer_price - $service->admin_payout,
-                'status'              => 'pending',
-                'is_paid'             => false,
+            // 3️⃣ Create request
+            $this->repo->create([
+                'user_id'         => $user->id,
+                'service_id'      => $service->id,
+                'profile_code'    => $data['profile_code'],
+                'customer_price'  => $service->customer_price,
+                'admin_payout'    => $service->admin_payout,
+                'platform_profit' => $service->customer_price - $service->admin_payout,
+                'status'          => 'pending',
+                'is_paid'         => false,
             ]);
         });
 
-        // Send debit confirmation email to user
+        // 📧 Wallet debit email
         Mail::to($user->email)->send(
             new WalletDebited(
                 user: $user,
                 amount: $service->customer_price,
                 balance: $debitTransaction->balance_after,
-                reason: 'Purchase: JAMB Admission Letter'
+                reason: 'Purchase: JAMB PIN Binding'
             )
         );
 
@@ -101,9 +107,7 @@ class JambPinBindingService
             'success' => true,
             'message' => 'Your work has been successfully submitted.',
         ], 201);
-
     }
-
     /**
      * ======================
      * ADMIN

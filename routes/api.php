@@ -110,7 +110,7 @@ Route::middleware('auth:api')->group(function () {
     /* |--------------------------------------------------------------------------
      | Administrator & User Management (Superadmin only)
      |-------------------------------------------------------------------------- */
-    Route::middleware(['role:superadmin', 'throttle:wallet'])->group(function () {
+    Route::middleware('role:superadmin')->group(function () {
         Route::get('/administrator', [AdminManagementController::class, 'index']);
         Route::delete('/administrator/{adminId}', [AdminManagementController::class, 'destroy']);
         Route::post('/administrator/{id}/restore', [AdminManagementController::class, 'restore']);
@@ -141,8 +141,7 @@ Route::middleware('auth:api')->group(function () {
     /* |--------------------------------------------------------------------------
      | Generic Service Request (if needed elsewhere)
      |-------------------------------------------------------------------------- */
-    Route::post('/service/request', [ServiceRequestController::class, 'request'])
-        ->middleware('throttle:service_request');
+    Route::post('/service/request', [ServiceRequestController::class, 'request']);
 
     /* |--------------------------------------------------------------------------
      | JAMB Services – Dynamic Routing (FIXED)
@@ -172,7 +171,7 @@ Route::middleware('auth:api')->group(function () {
             });
 
             // Superadmin routes
-            Route::middleware(['role:superadmin', 'throttle:wallet'])->group(function () use ($controller) {
+            Route::middleware(['role:superadmin'])->group(function () use ($controller) {
                 Route::post('/{id}/approve', [$controller, 'approve']);
                 Route::post('/{id}/reject', [$controller, 'reject']);
                 Route::get('/all', [$controller, 'all']);
@@ -205,7 +204,7 @@ Route::middleware('auth:api')->group(function () {
     /* |--------------------------------------------------------------------------
      | Payouts & Bank Accounts
      |-------------------------------------------------------------------------- */
-    Route::middleware(['role:administrator', 'throttle:wallet'])->group(function () {
+    Route::middleware('role:administrator')->group(function () {
         Route::post('/admin/payout/request', [AdminPayoutController::class, 'requestPayout']);
         Route::post('/wallet/payout/request', [AdminPayoutController::class, 'requestPayout']);
     });
@@ -220,7 +219,7 @@ Route::middleware('auth:api')->group(function () {
             Route::post('request', [AdminPayoutController::class, 'requestPayout']);
         });
 
-        Route::middleware(['role:superadmin', 'throttle:wallet'])->group(function () {
+        Route::middleware('role:superadmin')->group(function () {
             Route::get('/request', [AdminPayoutController::class, 'listRequests']);
             Route::post('/{payout}/approve', [AdminPayoutController::class, 'approvePayout']);
             Route::post('/{payout}/reject', [AdminPayoutController::class, 'rejectPayout']);

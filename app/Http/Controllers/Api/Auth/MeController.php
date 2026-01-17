@@ -251,6 +251,11 @@ class MeController extends Controller
                             'route' => '/user/cbt/results',
                             'icon' => 'BarChartOutlined',
                         ],
+                        [
+                            'label' => 'Subjects',
+                            'route' => '/user/cbt/subjects',
+                            'icon' => 'BookOutlined',
+                        ],
                     ],
                 ],
                 [
@@ -363,6 +368,11 @@ class MeController extends Controller
                     'label' => 'Manage Users',
                     'route' => '/superadmin/users',
                     'icon' => 'UserOutlined',
+                ],
+                [
+                    'label' => 'Manage Users',
+                    'route' => '/superadmin/administrators',
+                    'icon' => 'TeamOutlined',
                 ],
                 [
                     'label' => 'Manage Services',
