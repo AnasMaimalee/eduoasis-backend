@@ -303,7 +303,7 @@ Route::middleware('auth:api')->prefix('cbt')->group(function () {
 
         Route::get('/exams', [ExamManagementController::class, 'index']);
         Route::get('/live', [AdminCbtController::class, 'live']);
-        Route::get('/exams/{exam}', [ExamManagementController::class, 'show']);
+        Route::get('/exams/{exam}', [ExamController::class, 'show']);
         Route::get('/exams/{exam}/answers', [ExamManagementController::class, 'answers']);
         Route::get('/exams/{exam}/score', [ExamManagementController::class, 'score']);
         Route::get('/exams/{exam}/analytics', [ExamManagementController::class, 'analytics']);
@@ -355,7 +355,7 @@ Route::middleware('auth:api')->prefix('cbt')->group(function () {
         Route::get('/exam/resume', [ExamController::class, 'resume']);
         Route::get('/exam/time', [ExamController::class, 'time']);
 
-        Route::post('/exam/{exam}/submit', [ExamController::class, 'submit']);
+        Route::post('/exam/{eam}/submit', [ExamController::class, 'submit']);
         Route::post('/exam/{exam}/auto-submit', [ExamController::class, 'autoSubmitExam']);
 
         // ---------------- ANSWERS ----------------
@@ -365,6 +365,7 @@ Route::middleware('auth:api')->prefix('cbt')->group(function () {
         Route::get('/results/{exam}', [ResultController::class, 'show']);
         Route::get('/results/{exam}/summary', [ResultController::class, 'summary']);
         Route::get('/results/{exam}/pdf', [ResultController::class, 'downloadResult']);
+        Route::post('/exam/{exam}/refund', [ExamController::class, 'refundExamFee']);
 
         // ---------------- USER LEADERBOARD ----------------
         Route::get('/leaderboard', [LeaderboardController::class, 'selfRank']);
@@ -375,8 +376,7 @@ Route::middleware('auth:api')->prefix('cbt')->group(function () {
             ->middleware('throttle:wallet');
 
         // ---------------- REFUND ----------------
-        Route::post('/exam/{exam}/refund', [ExamController::class, 'refundIfUnsubmitted'])
-            ->middleware('throttle:wallet');
+
     });
 
     /*

@@ -7,7 +7,7 @@ return [
 
     'allowed_origins' => [
         'http://localhost:3000',             // local dev
-        'https://responsibility-reliable-northern-events.trycloudflare.com',
+        'https://metric-parade-landscape-consulting.trycloudflare.com',
         'http://172.24.24.69:3000'
     ],
 

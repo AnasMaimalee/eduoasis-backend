@@ -23,6 +23,14 @@ class ExamService
      ===================================================== */
     public function startExam(string $userId, array $subjectIds): Exam
     {
+        $ongoingExam = Exam::where('user_id', $userId)
+            ->where('status', 'ongoing')
+            ->first();
+
+        if ($ongoingExam) {
+            throw new \Exception('You already have an ongoing exam');
+        }
+
         $settings = $this->cbtSettingService->getSettings();
 
         $this->validateSubjectSelection($subjectIds, $settings->subjects_count);
@@ -61,7 +69,6 @@ class ExamService
      ===================================================== */
     public function getExamQuestions(Exam $exam): array
     {
-        $this->authorizeExam($exam);
         $this->ensureExamIsOngoing($exam);
 
         return $this->examRepository

@@ -17,10 +17,6 @@ class ResultService
      */
     public function getResult(Exam $exam): array
     {
-        // Ownership check
-        if ($exam->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access to result');
-        }
 
         if ($exam->status !== 'submitted') {
             abort(400, 'Exam not yet submitted');

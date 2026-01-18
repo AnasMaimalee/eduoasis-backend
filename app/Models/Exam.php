@@ -23,6 +23,7 @@ class Exam extends BaseModel
         'duration_minutes',
         'total_questions',
         'total_score',
+        'submitted'
     ];
 
     protected $casts = [
@@ -30,6 +31,7 @@ class Exam extends BaseModel
         'ends_at'      => 'datetime',
         'submitted_at' => 'datetime',
         'last_seen_at' => 'datetime',
+        'submitted'    => 'datetime'
     ];
 
     protected static function booted()

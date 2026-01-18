@@ -22,7 +22,6 @@ class ResultController extends Controller
      */
     public function show(Exam $exam)
     {
-        $this->authorize('view', $exam);
 
         $result = $this->resultService->getResult($exam);
 

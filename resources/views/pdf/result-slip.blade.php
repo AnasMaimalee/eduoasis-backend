@@ -49,6 +49,9 @@
             font-size: 11px;
             color: #6b7280;
         }
+        .red{
+            color: red;
+        }
     </style>
 </head>
 
@@ -96,7 +99,7 @@
                 <td>{{ $row['subject'] }}</td>
                 <td>{{ $row['total_questions'] }}</td>
                 <td>{{ $row['correct'] }}</td>
-                <td>{{ $row['wrong'] }}</td>
+                <td class="red">{{ $row['wrong'] }}</td>
                 <td>{{ $row['score'] }}</td>
             </tr>
         @endforeach
