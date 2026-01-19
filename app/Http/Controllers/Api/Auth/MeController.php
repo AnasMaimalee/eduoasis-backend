@@ -286,12 +286,12 @@ class MeController extends Controller
                 [
                     'label' => 'JAMB Result Notification',
                     'route' => '/user/services/jamb-result-notification',
-                    'icon' => 'BellOutlined',
+                    'icon' => 'NotificationOutlined',
                 ],
                 [
                     'label' => 'JAMB PIN Binding',
                     'route' => '/user/services/jamb-pin-binding',
-                    'icon' => 'BellOutlined',
+                    'icon' => 'LinkOutlined',
                 ],
                 [
                     'label' => 'Settings',
