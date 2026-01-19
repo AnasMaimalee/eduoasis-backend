@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use App\Models\ExamResult;
 class Exam extends BaseModel
 {
     use HasFactory;
@@ -54,5 +54,9 @@ class Exam extends BaseModel
     public function answers()
     {
         return $this->hasMany(ExamAnswer::class);
+    }
+    public function result()
+    {
+        return $this->hasOne(ExamResult::class);
     }
 }

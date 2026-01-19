@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CBT\ExamResultController;
 use App\Http\Controllers\Api\Service\JambPinBinding\JambPinBindingController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\MeController;
@@ -363,6 +364,7 @@ Route::middleware('auth:api')->prefix('cbt')->group(function () {
         Route::post('/exam/{exam}/answer/{answer}', [ExamController::class, 'submitAnswer']);
 
         // ---------------- RESULTS ----------------
+        Route::get('/result-history', [ExamResultController::class, 'index']);
         Route::get('/results/{exam}', [ResultController::class, 'show']);
         Route::get('/results/{exam}/summary', [ResultController::class, 'summary']);
         Route::get('/results/{exam}/pdf', [ResultController::class, 'downloadResult']);

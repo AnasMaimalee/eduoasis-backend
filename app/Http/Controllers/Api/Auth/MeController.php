@@ -298,6 +298,11 @@ class MeController extends Controller
                     'route' => '/user/setting',
                     'icon' => 'SettingOutlined',
                 ],
+                [
+                    'label' => 'Notifications',
+                    'route' => '/user/notifications',
+                    'icon' => 'BellOutlined',
+                ],
             ],
             'administrator' => [
                 ['label' => 'Dashboard', 'route' => '/dashboard/administrator', 'icon' => 'DashboardOutlined'],

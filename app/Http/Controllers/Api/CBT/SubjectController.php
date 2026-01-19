@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\CBT\SubjectService;
 use App\Models\Subject;
+use Illuminate\Support\Facades\Auth;
 
 class SubjectController extends Controller
 {
@@ -52,6 +53,10 @@ class SubjectController extends Controller
     // Update subject (admin only)
     public function update(Request $request, Subject $subject)
     {
+        $user = Auth::user();
+        if(!$user->role === "superadmin"){
+            abort(403, 'Unauthorized action.');
+        }
         $request->validate([
             'name' => 'sometimes|required|string|unique:subjects,name,' . $subject->id,
             'slug' => 'sometimes|required|string|unique:subjects,slug,' . $subject->id,

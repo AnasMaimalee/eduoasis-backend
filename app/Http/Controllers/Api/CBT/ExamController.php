@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api\CBT;
 use App\Http\Controllers\Controller;
 use App\Models\CbtSetting;
 use App\Models\Exam;
+use App\Repositories\CBT\CbtSettingRepository;
 use App\Repositories\CBT\ExamRepository;
+use App\Services\CBT\ExamResultService;
 use Illuminate\Http\Request;
 use App\Services\CBT\ExamService;
 use App\Services\CBT\WalletPaymentService;
@@ -16,7 +18,9 @@ class ExamController extends Controller
     public function __construct(
         protected ExamService $examService,
         protected ExamRepository $examRepository,
-        protected WalletPaymentService $walletService
+        protected WalletPaymentService $walletService,
+        protected ExamResultService $examResultService,
+        protected CbtSettingRepository $cbtSettingRepository,
 
     ) {}
 
@@ -38,8 +42,8 @@ class ExamController extends Controller
         ]);
 
         $user    = $request->user();
-        $examFee = (float) config('cbt.exam_fee');
-
+        $cbtSetting = CbtSetting::where('id', 'cbt-settings-global')->first();
+        $examFee = (float) $cbtSetting->exam_fee;
         DB::beginTransaction();
         try {
             // ✅ 1. Create exam FIRST
@@ -175,7 +179,7 @@ class ExamController extends Controller
             ->firstOrFail();
 
         $this->examService->submitExam($exam);
-
+        $this->examResultService->generate($exam);
         return response()->json([
             'message' => 'Exam submitted successfully',
             'exam_id' => $exam->id
