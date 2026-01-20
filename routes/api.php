@@ -30,7 +30,7 @@ use App\Http\Controllers\Api\Auth\LoginAuditController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\Profile\ProfileController;
-
+use App\Http\Controllers\Api\Feedback\FeedbackController;
 /*
  * CBT Controller
  * */
@@ -392,3 +392,17 @@ Route::middleware('auth:api')->prefix('cbt')->group(function () {
         Route::post('/exam/{exam}/check-time', [ExamTimerController::class, 'checkAndSubmit']);
     });
 });
+
+/*
+ * Feedback Route
+ * */
+
+Route::middleware('auth:api')->group(function () {
+    Route::middleware('role:superadmin')->prefix('/superadmin')->group(function () {
+        Route::get('/feedback', [FeedbackController::class, 'index']);
+        Route::patch('/feedback/{feedback}/status', [FeedbackController::class, 'updateStatus']);
+    });
+});
+
+Route::post('/feedback', [FeedbackController::class, 'store']);
+Route::get('/feedback', [FeedbackController::class, 'showUserFeedback']);
