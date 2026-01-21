@@ -37,6 +37,5 @@ class DatabaseSeeder extends Seeder
         ]);
         $normalUser->assignRole('user');
 
-        $this->call(WalletSeeder::class);
     }
 }

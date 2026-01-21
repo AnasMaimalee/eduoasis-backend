@@ -62,9 +62,10 @@ Route::prefix('auth')->group(function () {
 
         // ->middleware('throttle:5,1');
 
-         Route::middleware('auth:api')->group(function () {
-            Route::post('/2fa/setup', [TwoFactorController::class, 'setup']);
-            Route::post('/2fa/confirm', [TwoFactorController::class, 'confirm']);
+        Route::middleware('auth:api')->group(function () {
+        Route::post('/2fa/setup', [TwoFactorController::class, 'setup']);
+        Route::post('/2fa/confirm', [TwoFactorController::class, 'confirm']);
+        Route::get('/2fa/status', [TwoFactorController::class, 'twoFaStatus']);
     });
 });
 
@@ -78,6 +79,10 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/webauthn/register', [WebauthnController::class, 'register']);
     Route::get('/webauthn/credentials', [WebauthnController::class, 'index']);
     Route::delete('/webauthn/credentials', [WebauthnController::class, 'destroy']);
+    // routes/api.php
+
+
+
 });
 
 Route::post('/webauthn/login/options', [WebauthnController::class, 'loginOptions']);

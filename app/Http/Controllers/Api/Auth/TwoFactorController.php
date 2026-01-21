@@ -130,4 +130,13 @@ class TwoFactorController extends Controller
         ]);
     }
 
+    // AuthController.php
+    public function twoFaStatus(Request $request)
+    {
+        $user = $request->user();
+        return response()->json([
+            'enabled' => (bool) $user->google2fa_enabled
+        ]);
+    }
+
 }
