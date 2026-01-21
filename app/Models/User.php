@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Laragear\WebAuthn\Contracts\WebAuthnAuthenticatable;
 
 class User extends Authenticatable implements JWTSubject
 {

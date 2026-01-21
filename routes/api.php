@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\CBT\ExamResultController;
+use App\Http\Controllers\Api\WebauthnController;
 use App\Http\Controllers\Api\Service\JambPinBinding\JambPinBindingController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\MeController;
@@ -63,6 +64,21 @@ Route::prefix('auth')->group(function () {
             Route::post('/2fa/confirm', [TwoFactorController::class, 'confirm']);
     });
 });
+
+//finger print
+
+
+/* ───────────── Authenticated WebAuthn ───────────── */
+Route::middleware('auth:api')->group(function () {
+    Route::post('/webauthn/register/options', [WebauthnController::class, 'registerOptions']);
+    Route::post('/webauthn/register', [WebauthnController::class, 'register']);
+    Route::get('/webauthn/credentials', [WebauthnController::class, 'index']);
+    Route::delete('/webauthn/credentials', [WebauthnController::class, 'destroy']);
+});
+
+Route::post('/webauthn/login/options', [WebauthnController::class, 'loginOptions']);
+Route::post('/webauthn/login', [WebauthnController::class, 'login']);
+
 
 // Password Reset
 Route::post('forgot-password', [PasswordResetController::class, 'forgot']);
