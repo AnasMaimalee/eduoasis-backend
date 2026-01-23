@@ -30,11 +30,12 @@ class ProfileController extends Controller
             'bank_name'      => 'required|string',
             'account_name'   => 'required|string',
             'account_number' => 'required|string|min:10',
+            'bank_code'      => 'required|string|min:3'
         ]);
 
         // POST will either create or update
         $account = $this->service->updateBank(auth()->user(), $request->only([
-            'bank_name', 'account_name', 'account_number'
+            'bank_name', 'account_name', 'account_number', 'bank_code'
         ]));
 
         return response()->json([

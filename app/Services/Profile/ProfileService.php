@@ -15,7 +15,8 @@ class ProfileService
         return [
             'name' => $user->name,
             'email' => $user->email,
-            'bank_account' => $user->bankAccount // relation
+            'bank_account' => $user->bankAccount, // relation
+            'banlk_code'  => $user->bank_code
         ];
     }
 
