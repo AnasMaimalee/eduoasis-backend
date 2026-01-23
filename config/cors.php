@@ -7,7 +7,7 @@ return [
 
     'allowed_origins' => [
         'http://localhost:3000',             // local dev
-        'https://money-frontend-k1kgea8xd-anas-maimalees-projects.vercel.app',
+        'https://money-frontend-swart.vercel.app',
         'http://172.24.24.69:3000'
     ],
 

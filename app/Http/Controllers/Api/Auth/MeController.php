@@ -473,7 +473,7 @@ public function login(Request $request)
                     'icon' => 'UserOutlined',
                 ],
                 [
-                    'label' => 'Manage Users',
+                    'label' => 'Manage Administrator',
                     'route' => '/superadmin/administrators',
                     'icon' => 'TeamOutlined',
                 ],
