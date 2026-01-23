@@ -57,6 +57,7 @@ use App\Http\Controllers\Api\CBT\SuperAdmin\LiveCbtController;
 Route::prefix('auth')->group(function () {
     Route::post('/register', [MeController::class, 'register']);
     Route::post('/login', [MeController::class, 'login']);
+    Route::post('/set-password', [PasswordController::class, 'resetPassword']);
     // routes/api.php
     Route::post('/login/check', [MeController::class, 'loginCheck']);
 

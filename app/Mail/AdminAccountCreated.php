@@ -2,27 +2,31 @@
 
 namespace App\Mail;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use App\Models\User;
 
 class AdminAccountCreated extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $user;
-    public $password;
+    public User $user;
+    public string $resetUrl;
 
-    public function __construct(User $user, $password)
+    public function __construct(User $user, string $resetUrl)
     {
         $this->user = $user;
-        $this->password = $password;
+        $this->resetUrl = $resetUrl;
     }
 
     public function build()
     {
-        return $this->subject('Administrator Account Created')
-            ->view('emails.admin-created'); // create this view
+        return $this->subject('Set Your Administrator Password')
+            ->view('emails.admin-set-password')
+            ->with([
+                'user' => $this->user,
+                'resetUrl' => $this->resetUrl,
+            ]);
     }
 }

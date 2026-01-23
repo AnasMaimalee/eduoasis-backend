@@ -22,13 +22,6 @@ class DatabaseSeeder extends Seeder
         ]);
         $superAdmin->assignRole('superadmin');
 
-        $adminOne = User::factory()->create([
-            'name' => 'Administrator',
-            'email' => 'anasmaimalee@gmail.com',
-            'password' => bcrypt('password'),
-        ]);
-        $adminOne->assignRole('administrator');
-
         $normalUser = User::factory()->create([
             'name' => 'Anas Maimalee',
             'email' => 'anasment6@gmail.com',

@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 use App\Models\LoginAudit;
 use Illuminate\Support\Facades\Http;
 use PragmaRX\Google2FA\Google2FA;
+use Illuminate\Support\Facades\Password;
 
 class MeController extends Controller
 {
@@ -209,6 +210,11 @@ public function login(Request $request)
     }
 
     // CREATE ADMINISTRATOR
+   
+
+
+ 
+
     public function createAdministrator(Request $request)
     {
         $request->validate([
@@ -218,27 +224,36 @@ public function login(Request $request)
             'state' => 'required|string',
         ]);
 
-        $password = Str::random(8);
-
+        // Create user WITHOUT password
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
             'state' => $request->state,
-            'password' => bcrypt($password),
+            'password' => bcrypt(Str::random(32)), // temporary unusable password
         ]);
 
         $user->assignRole('administrator');
 
-        // Wallet is automatically created via model boot()
+        // Generate password reset token
+        $token = Password::broker('users')->createToken($user);
 
-        Mail::to($user->email)->send(new AdminAccountCreated($user, $password));
+        // Build secure reset URL
+        $resetUrl = config('app.frontend_url')
+        . '/set-password/token?token=' . $token
+        . '&email=' . urlencode($user->email);
+
+        // Send email
+        Mail::to($user->email)->send(
+            new AdminAccountCreated($user, $resetUrl)
+        );
 
         return response()->json([
             'message' => 'Administrator created successfully',
-            'user' => $this->formatUser($user->load('wallet')), // optional: include wallet
+            'user' => $user->load('wallet'),
         ]);
     }
+
 
     private function logLoginAttempt($user, Request $request, bool $success)
     {

@@ -34,15 +34,16 @@ class PasswordResetController extends Controller
             'password' => 'required|string|min:6|confirmed',
         ]);
 
-        $status = Password::reset(
+        $status = Password::broker('users')->reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
-                $user->forceFill([
+                $user->update([
                     'password' => Hash::make($password),
-                    'remember_token' => Str::random(60),
-                ])->save();
+                    'email_verified_at' => now(),
+                ]);
             }
         );
+
 
         if ($status === Password::PASSWORD_RESET) {
             return response()->json(['message' => 'Password reset successfully']);
