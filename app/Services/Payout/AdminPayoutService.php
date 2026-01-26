@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Services\Payout;
-
+use Illuminate\Support\Str;
 use App\Enums\PayoutStatus;
 use App\Models\PayoutRequest;
 use App\Models\User;
@@ -76,63 +76,59 @@ class AdminPayoutService
     /* =====================================================
         SUPERADMIN APPROVES & PAYS
     ====================================================== */
+
     public function approveAndPay(PayoutRequest $payout, User $superAdmin): array
     {
         if (! $superAdmin->hasRole('superadmin')) {
             abort(403, 'Only superadmin can approve payouts.');
         }
 
-        $admin = $payout->administrator;
-        $bank  = $admin->bankAccount;
-
-        if (! $bank) {
-            abort(400, 'Admin bank details not found.');
+        if ($payout->status === 'paid') {
+            abort(409, 'This payout has already been processed.');
         }
 
-        return DB::transaction(function () use ($payout, $admin, $bank) {
+        $admin = $payout->administrator;
 
-            // 🔹 CREATE RECIPIENT IF NOT EXISTS
-            if (! $bank->recipient_code) {
-                $recipientResponse = $this->paystack->createRecipient([
-                    'type'           => 'nuban',
-                    'name'           => $bank->account_name,
-                    'account_number' => $bank->account_number,
-                    'bank_code'      => $bank->bank_code,
-                    'currency'       => 'NGN',
-                ]);
+        return DB::transaction(function () use ($payout, $admin, $superAdmin) {
 
-                $recipientCode = $recipientResponse['data']['recipient_code'] ?? null;
+            // 🔹 Parent reference for this payout
+            $parentReference = 'CASHOUT-' . Str::uuid();
 
-                if (! $recipientCode) {
-                    abort(500, 'Unable to configure bank recipient. Please contact support.');
-                }
+            // 🔹 Debit ADMIN wallet (record history)
+            $this->walletService->debitUser(
+                $admin,
+                $payout->amount,
+                'Administrator payout approved',
+                $parentReference . '-ADMIN'
+            );
 
-                $bank->update([
-                    'recipient_code' => $recipientCode,
-                ]);
-            }
+            // 🔹 Debit SUPERADMIN wallet (record history)
+            $this->walletService->debitUser(
+                $superAdmin,
+                $payout->amount,
+                'Administrator payout disbursement',
+                $parentReference . '-SUPERADMIN'
+            );
 
-            // 🔹 INITIATE PAYSTACK TRANSFER
-            $transferResponse = $this->paystack->initiateTransfer([
-                'amount'    => (int) ($payout->amount * 100), // convert to kobo
-                'recipient' => $bank->recipient_code,
-                'reason'    => "Admin payout for request #{$payout->id}",
-            ]);
-
-            // 🔹 UPDATE PAYOUT STATUS
+            // 🔹 Update payout record
             $payout->update([
-                'status'      => PayoutStatus::PROCESSING,
-                'approved_by' => auth()->id(),
-                'reference'   => $transferResponse['data']['reference'] ?? null,
+                'status'      => 'paid',
+                'approved_by' => $superAdmin->id,
+                'reference'   => $parentReference,
+                'paid_at'     => now(),
             ]);
 
             return [
-                'success' => true,
-                'message' => 'Payout initiated successfully',
-                'amount'  => $payout->amount,
+                'success'   => true,
+                'message'   => 'Payout approved successfully (manual payment)',
+                'amount'    => $payout->amount,
+                'reference' => $parentReference,
             ];
         });
     }
+
+
+
 
     /* =====================================================
         SUPERADMIN REJECTS PAYOUT
