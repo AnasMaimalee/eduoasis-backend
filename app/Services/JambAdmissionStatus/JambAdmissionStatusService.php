@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Repositories\JambAdmissionStatus\JambAdmissionStatusRepository;
 use App\Services\WalletService;
+use App\Events\JambJobSubmitted;
+use App\Events\JambJobTaken;
+use App\Events\JambJobCompleted;
 
 class JambAdmissionStatusService
 {
@@ -46,7 +49,7 @@ class JambAdmissionStatusService
         $groupReference = 'jamb_admission_status_' . Str::uuid();
         $debitTransaction = null;
 
-        $createdRequest = DB::transaction(function () use ($user, $data, $service, $superAdmin, $groupReference, &$debitTransaction) {
+        $job = DB::transaction(function () use ($user, $data, $service, $superAdmin, $groupReference, &$debitTransaction) {
             // Debit user and credit platform
             $debitTransaction = $this->walletService->servicePayment(
                 customer: $user,
@@ -80,10 +83,11 @@ class JambAdmissionStatusService
                 reason: 'Purchase: JAMB Admission Status Check'
             )
         );
-
+        broadcast(new JambJobSubmitted($job))->toOthers();
         return response()->json([
             'success' => true,
             'message' => 'Your request has been successfully submitted.',
+            'id' => $job->id
         ], 201);
     }
 
@@ -112,8 +116,12 @@ class JambAdmissionStatusService
             'status'   => 'processing',
             'taken_by' => $admin->id,
         ]);
+        broadcast(new JambJobTaken($job))->toOthers();
 
-        return $job;
+        return [
+            'message' => 'Job Has Successfully Taken',
+            'id' => $job->id
+        ];
     }
 
     public function complete(string $id, string $filePath, User $admin)
@@ -137,6 +145,7 @@ class JambAdmissionStatusService
             Mail::to($job->email)->send(
                 new JambAdmissionStatusCompletedMail($job)
             );
+            broadcast(new JambJobCompleted($job))->toOthers();
 
             return [
                 'message' => 'Job completed and awaiting superadmin approval',
@@ -183,6 +192,7 @@ class JambAdmissionStatusService
                 'approved_by'     => $superAdmin->id,
                 'platform_profit' => $job->customer_price - $job->admin_payout,
             ]);
+            broadcast(new JambJobCompleted($job))->toOthers();    
 
             return [
                 'message'         => 'Job approved and administrator paid from superadmin wallet',

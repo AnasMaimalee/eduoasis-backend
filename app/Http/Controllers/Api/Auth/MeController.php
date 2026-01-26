@@ -17,7 +17,7 @@ use App\Models\LoginAudit;
 use Illuminate\Support\Facades\Http;
 use PragmaRX\Google2FA\Google2FA;
 use Illuminate\Support\Facades\Password;
-
+use Illuminate\Http\Response;
 class MeController extends Controller
 {
 
@@ -217,6 +217,13 @@ public function login(Request $request)
 
     public function createAdministrator(Request $request)
     {
+        // 🔐 SECURITY CHECK: Only superadmin allowed
+        if (!auth()->check() || !auth()->user()->hasRole('superadmin')) {
+            return response()->json([
+                'message' => 'Unauthorized. Only superadmins can create administrators.'
+            ], Response::HTTP_FORBIDDEN);
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',

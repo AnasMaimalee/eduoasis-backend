@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Repositories\JambAdmissionResultNotification\JambAdmissionResultNotificationRepository;
 use App\Services\WalletService;
+use App\Events\JambJobSubmitted;
+use App\Events\JambJobTaken;
+use App\Events\JambJobCompleted;
 
 class JambAdmissionResultNotificationService
 {
@@ -48,7 +51,7 @@ class JambAdmissionResultNotificationService
 
         $debitTransaction = null;
 
-        $createdRequest = DB::transaction(function () use ($user, $data, $service, $superAdmin, $groupReference, &$debitTransaction) {
+        $job = DB::transaction(function () use ($user, $data, $service, $superAdmin, $groupReference, &$debitTransaction) {
             // Debit user → credit platform
             $debitTransaction = $this->walletService->servicePayment(
                 customer: $user,
@@ -83,10 +86,11 @@ class JambAdmissionResultNotificationService
                 reason: 'Purchase: JAMB Result Release Notification'
             )
         );
-
+        broadcast(new JambJobSubmitted($job))->toOthers();
         return response()->json([
             'success' => true,
             'message' => 'Your request has been successfully submitted.',
+            'id' => $job->id
         ], 201);
     }
 
@@ -115,8 +119,12 @@ class JambAdmissionResultNotificationService
             'status'   => 'processing',
             'taken_by' => $admin->id,
         ]);
+        broadcast(new JambJobTaken($job))->toOthers();
 
-        return $job;
+        return [
+            'message' => 'Job has successfully taken',
+            'id' => $job->id
+        ];
     }
 
     public function complete(string $id, string $filePath, User $admin)
@@ -145,6 +153,7 @@ class JambAdmissionResultNotificationService
             Mail::to($job->email)->send(
                 new JambAdmissionResultNotificationCompletedMail($job)
             );
+            broadcast(new JambJobCompleted($job))->toOthers();
 
             return [
                 'message' => 'Notification setup completed and awaiting superadmin approval',
@@ -191,6 +200,7 @@ class JambAdmissionResultNotificationService
                 'approved_by'     => $superAdmin->id,
                 'platform_profit' => $job->customer_price - $job->admin_payout,
             ]);
+            broadcast(new JambJobCompleted($job))->toOthers();    
 
             return [
                 'message'         => 'Job approved and admin paid from superadmin wallet',

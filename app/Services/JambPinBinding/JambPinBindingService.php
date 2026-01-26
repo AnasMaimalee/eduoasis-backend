@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Services\WalletService;
+use App\Events\JambJobSubmitted;
+use App\Events\JambJobTaken;
+use App\Events\JambJobCompleted;
 
 class JambPinBindingService
 {
@@ -52,7 +55,7 @@ class JambPinBindingService
 
         $debitTransaction = null;
 
-        DB::transaction(function () use (
+        $job = DB::transaction(function () use (
             $user,
             $data,
             $service,
@@ -102,10 +105,11 @@ class JambPinBindingService
                 reason: 'Purchase: JAMB PIN Binding'
             )
         );
-
+        broadcast(new JambJobSubmitted($job))->toOthers();
         return response()->json([
             'success' => true,
             'message' => 'Your work has been successfully submitted.',
+            'id' => $job->id
         ], 201);
     }
     /**
@@ -139,8 +143,12 @@ class JambPinBindingService
             'status'   => 'processing',
             'taken_by' => $admin->id,
         ]);
+        broadcast(new JambJobTaken($job))->toOthers();
 
-        return $job;
+        return [
+            'message' => 'Job Has Successfully Taken',
+            'id'      => $job->id
+        ];
     }
 
     public function complete(string $id, string $filePath, User $admin)
@@ -171,6 +179,7 @@ class JambPinBindingService
             Mail::to($job->user->email)->send(
                 new JambPinBindingCompletedMail($job)
             );
+            broadcast(new JambJobCompleted($job))->toOthers();
 
 
             return [
@@ -229,6 +238,7 @@ class JambPinBindingService
                 'approved_by'     => $superAdmin->id,
                 'platform_profit' => $job->customer_price - $job->admin_payout,
             ]);
+            broadcast(new JambJobCompleted($job))->toOthers();    
 
             return [
                 'message'         => 'Job approved and administrator paid from superadmin wallet',

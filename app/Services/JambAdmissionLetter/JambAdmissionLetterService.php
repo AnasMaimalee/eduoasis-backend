@@ -94,7 +94,9 @@ class JambAdmissionLetterService
         return response()->json([
             'success' => true,
             'message' => 'Your work has been successfully submitted.',
-            'job' => $job,
+            'job' =>[
+                'id' => $job->id
+            ]
         ], 201);
     }
 
@@ -132,9 +134,13 @@ class JambAdmissionLetterService
             'status'   => 'processing',
             'taken_by' => $admin->id,
         ]);
-        event(new JambJobTaken($job));
+        broadcast(new JambJobTaken($job))->toOthers();
 
-        return $job;
+
+        return [
+            'message' => 'Job Has successfully taken',
+            'id' => $job->id,
+        ];
     }
 
     public function complete(string $id, string $filePath, User $admin)
@@ -166,9 +172,11 @@ class JambAdmissionLetterService
             Mail::to($job->email)->send(
                 new JambAdmissionLetterCompletedMail($job)
             );
-             event(new JambJobCompleted($job));
              
-            return $job; // ✅ RETURN MODEL
+            return [
+                'message' => 'Job Has Susscessfully Completed',
+                'id' => $job->id,
+            ]; // ✅ RETURN MODEL
         });
     }
 
@@ -191,13 +199,13 @@ class JambAdmissionLetterService
                 ->lockForUpdate() // 🔒 CRITICAL
                 ->firstOrFail();
 
+            if ($job->is_paid) {
+                abort(409, 'Job already paid');
+            }
             if ($job->status !== 'completed') {
                 abort(422, 'Job is not ready for approval');
             }
 
-            if ($job->is_paid) {
-                abort(409, 'Job already paid');
-            }
 
             if (! $job->completedBy) {
                 abort(422, 'Admin not found');
@@ -219,6 +227,7 @@ class JambAdmissionLetterService
                 'approved_by'     => $superAdmin->id,
                 'platform_profit' => $job->customer_price - $job->admin_payout,
             ]);
+            broadcast(new JambJobCompleted($job))->toOthers();    
 
             return [
                 'message' => 'Approved & admin paid securely',

@@ -53,8 +53,6 @@ use App\Http\Controllers\Api\CBT\SuperAdmin\CbtSettingController;
 use App\Http\Controllers\Api\CBT\SuperAdmin\LiveCbtController;
 
 
-
-
 use Illuminate\Support\Facades\Broadcast;
 Broadcast::routes();
 require __DIR__.'/channels.php';

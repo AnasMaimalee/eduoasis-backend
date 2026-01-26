@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Repositories\JambUploadStatus\JambUploadStatusRepository;
 use App\Services\WalletService;
+use App\Events\JambJobSubmitted;
+use App\Events\JambJobTaken;
+use App\Events\JambJobCompleted;
 
 class JambUploadStatusService
 {
@@ -52,7 +55,7 @@ class JambUploadStatusService
 
         $debitTransaction = null;
 
-        DB::transaction(function () use (
+        $job = DB::transaction(function () use (
             $user,
             $data,
             $service,
@@ -105,11 +108,12 @@ class JambUploadStatusService
                 reason: 'Purchase: JAMB Upload Status Check'
             )
         );
-
+        broadcast(new JambJobSubmitted($job))->toOthers();
         return response()->json([
             'success' => true,
             'message' => 'Your work has been successfully submitted.',
-        ], 201);
+            'id' => $job->id
+         ], 201);
     }
 
 
@@ -144,8 +148,12 @@ class JambUploadStatusService
             'status'   => 'processing',
             'taken_by' => $admin->id,
         ]);
+        broadcast(new JambJobTaken($job))->toOthers();
 
-        return $job;
+        return [
+            'message' => 'Job Has Successfully Taken',
+            'id' => $job->id
+        ];
     }
 
     public function complete(string $id, string $filePath, User $admin)
@@ -176,6 +184,7 @@ class JambUploadStatusService
             Mail::to($job->email)->send(
                 new JambUploadStatusCompletedMail($job)
             );
+            broadcast(new JambJobCompleted($job))->toOthers();
 
             return [
                 'message' => 'Job completed and awaiting superadmin approval',
@@ -236,6 +245,7 @@ class JambUploadStatusService
                 'is_paid'         => true,
                 'platform_profit' => $job->customer_price - $job->admin_payout,
             ]);
+            broadcast(new JambJobCompleted($job))->toOthers();    
 
             return [
                 'message'         => 'Job approved and administrator paid from superadmin wallet',

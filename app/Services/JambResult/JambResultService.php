@@ -2,6 +2,9 @@
 
 namespace App\Services\JambResult;
 
+use App\Events\JambJobSubmitted;
+use App\Events\JambJobTaken;
+use App\Events\JambJobCompleted;
 use App\Models\User;
 use App\Models\Service;
 use Illuminate\Support\Facades\DB;
@@ -47,7 +50,7 @@ class JambResultService
         $groupReference = 'jamb_result_' . Str::uuid();
         $transactions = null;
 
-        $createdRequest = DB::transaction(function () use ($user, $data, $service, $superAdmin, $groupReference, &$transactions) {
+        $job = DB::transaction(function () use ($user, $data, $service, $superAdmin, $groupReference, &$transactions) {
             // Atomic debit from user and credit to platform
             $transactions = $this->walletService->servicePayment(
                 customer: $user,
@@ -83,10 +86,12 @@ class JambResultService
                 )
             );
         }
+        broadcast(new JambJobSubmitted($job))->toOthers();
 
         return response()->json([
             'success' => true,
             'message' => 'Your work has been successfully submitted.',
+            'id'      => $job->id
         ], 201);
     }
 
@@ -121,8 +126,12 @@ class JambResultService
             'status'   => 'processing',
             'taken_by' => $admin->id,
         ]);
+        broadcast(new JambJobTaken($job))->toOthers();
 
-        return $job;
+        return [
+            'message'=> 'Job Has Successfully Taken',
+            'id' => $job->id,
+        ];
     }
 
     public function complete(string $id, string $filePath, User $admin)
@@ -154,7 +163,7 @@ class JambResultService
             Mail::to($job->email)->send(
                 new JambResultServiceCompletedMail($job)
             );
-
+            broadcast(new JambJobCompleted($job))->toOthers();
             return [
                 'message' => 'Job completed and awaiting superadmin approval',
                 'job' => [
@@ -196,14 +205,16 @@ class JambResultService
 
         return DB::transaction(function () use ($id, $superAdmin) {
             $job = $this->repo->find($id);
+            
+            if ($job->is_paid) {
+                abort(409, 'Job already paid');
+            }
 
             if ($job->status !== 'completed') {
                 abort(422, 'Job is not ready for approval');
             }
 
-            if ($job->is_paid) {
-                abort(409, 'Job already paid');
-            }
+           
 
             // Debit superadmin and credit admin
             $this->walletService->adminCreditUser(
@@ -219,7 +230,7 @@ class JambResultService
                 'platform_profit' => $job->customer_price - $job->admin_payout,
                 'approved_by'     => $superAdmin->id,
             ]);
-
+            broadcast(new JambJobCompleted($job))->toOthers();    
             return [
                 'message'         => 'Job approved and administrator paid from superadmin wallet',
                 'job_id'          => $job->id,
