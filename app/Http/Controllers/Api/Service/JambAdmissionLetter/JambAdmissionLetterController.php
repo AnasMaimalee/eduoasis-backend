@@ -131,19 +131,6 @@ class JambAdmissionLetterController extends Controller
 
         return response()->json([
             'message' => 'Job completed and awaiting superadmin approval',
-            'data' => [
-                'id' => $job->id,
-                'status' => $job->status,
-                'result_file' => $job->result_file,
-                'result_file_url' => route('services.jamb-admission-letter.download', $job->id),
-                'user' => [
-                    'name' => $job->user->name,
-                    'email' => $job->user->email,
-                ],
-                'service' => $job->service->name,
-                'completed_by' => $job->completedBy->name,
-                'created_at' => $job->created_at->toDateTimeString(),
-            ]
         ]);
     }
 

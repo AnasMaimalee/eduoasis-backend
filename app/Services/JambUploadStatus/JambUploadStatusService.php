@@ -112,7 +112,7 @@ class JambUploadStatusService
         return response()->json([
             'success' => true,
             'message' => 'Your work has been successfully submitted.',
-            'id' => $job->id
+            
          ], 201);
     }
 

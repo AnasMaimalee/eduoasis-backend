@@ -14,18 +14,22 @@ return new class extends Migration {
             $table->decimal('amount', 12, 2);
             $table->decimal('balance_snapshot', 12, 2);
 
-            $table->string('status')->default('pending');
+            $table->string('status')->default('pending'); // pending | approved | rejected | paid
             $table->string('reference')->nullable();
 
             $table->uuid('approved_by')->nullable();
             $table->timestamp('approved_at')->nullable();
 
+            // 🔴 NEW
+            $table->text('rejection_reason')->nullable();
+            $table->timestamp('rejected_at')->nullable();
+
             $table->timestamps();
 
-            // 🔐 Foreign Keys
             $table->foreign('admin_id')->references('id')->on('users');
             $table->foreign('approved_by')->references('id')->on('users');
         });
+
     }
 
     public function down(): void

@@ -92,14 +92,22 @@ class AdminPayoutController extends Controller
 
 
 
-    public function rejectPayout(PayoutRequest $payout, AdminPayoutService $service): JsonResponse
-    {
-        $result = $service->reject($payout, auth()->user());
-
-        return response()->json([
-            'message' => 'Payout rejected successfully',
-            'data'    => $result,
+    public function rejectPayout(
+        Request $request,
+        PayoutRequest $payout,
+        AdminPayoutService $service
+    ): JsonResponse {
+        $request->validate([
+            'reason' => 'required|string|min:5',
         ]);
+
+        $result = $service->reject(
+            $payout,
+            auth()->user(),
+            $request->reason
+        );
+
+        return response()->json($result);
     }
 
 }

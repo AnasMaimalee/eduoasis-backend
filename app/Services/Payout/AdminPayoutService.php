@@ -133,25 +133,33 @@ class AdminPayoutService
     /* =====================================================
         SUPERADMIN REJECTS PAYOUT
     ====================================================== */
-    public function reject(PayoutRequest $payout, User $superAdmin): array
-    {
+    public function reject(
+        PayoutRequest $payout,
+        User $superAdmin,
+        string $reason
+    ): array {
         if (! $superAdmin->hasRole('superadmin')) {
             abort(403, 'Only superadmin can reject payouts.');
         }
 
+        if (! trim($reason)) {
+            abort(422, 'Rejection reason is required.');
+        }
+
         $payout->update([
-            'status'      => PayoutStatus::REJECTED,
-            'approved_by' => null,
-            'approved_at' => null,
-            'updated_at'  => now(),
+            'status'           => 'rejected',
+            'rejection_reason' => $reason,
+            'rejected_at'      => now(),
+            'approved_by'      => $superAdmin->id,
         ]);
 
         return [
-            'success'   => true,
-            'message'   => 'Payout rejected successfully',
-            'amount'    => $payout->amount,
+            'success' => true,
+            'message' => 'Payout rejected successfully',
+            'amount'  => $payout->amount,
         ];
     }
+
 
     /* =====================================================
         CREATE PAYSTACK RECIPIENT (PRIVATE)
