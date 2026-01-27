@@ -15,7 +15,7 @@ class AdminPayoutController extends Controller
     {
         $user = auth()->user();
 
-        $query = PayoutRequest::with('administrator')->latest();
+        $query = PayoutRequest::with(['administrator', 'bankAccount'])->latest();
 
         if ($user->hasRole('administrator')) {
             $query->where('admin_id', $user->id);
@@ -25,9 +25,10 @@ class AdminPayoutController extends Controller
 
         return response()->json([
             'message' => 'Payout requests retrieved successfully',
-            'data'    => $payouts,
+            'data'    => $payouts->toArray(),
         ]);
     }
+
 
     // Admin sees only their own payout requests
     public function myPayoutRequests(Request $request): JsonResponse

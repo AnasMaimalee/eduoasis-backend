@@ -81,4 +81,10 @@ class PayoutRequest extends Model
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
+
+
+    public function bankAccount()
+    {
+        return $this->hasOne(BankAccount::class, 'user_id', 'admin_id');
+    }
 }
