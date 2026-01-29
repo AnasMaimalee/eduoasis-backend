@@ -20,7 +20,8 @@ class AdminDashboardService
             'jamb_admission_letter_requests',
             'jamb_upload_status_requests',
             'jamb_admission_status_requests',
-            'jamb_admission_result_notification_requests'
+            'jamb_admission_result_notification_requests',
+            'jamb_pin_binding_requests'
         ];
 
         $totalJobs = 0;
@@ -118,7 +119,8 @@ class AdminDashboardService
             'jamb_admission_letter_requests' => 'Admission Letter',
             'jamb_upload_status_requests' => "O'Level Upload Status",
             'jamb_admission_status_requests' => 'Admission Status Check',
-            'jamb_admission_result_notification_requests' => 'Result Notification'
+            'jamb_admission_result_notification_requests' => 'Result Notification',
+            'jamb_pin_binding_requests' => 'JAMB PIN Binding Request'
         ];
 
         return $map[$table] ?? ucwords(str_replace('_requests', '', str_replace('jamb_', '', $table)));
@@ -134,7 +136,8 @@ class AdminDashboardService
             'jamb_admission_letter_requests',
             'jamb_upload_status_requests',
             'jamb_admission_status_requests',
-            'jamb_admission_result_notification_requests'
+            'jamb_admission_result_notification_requests',
+            'jamb_pin_binding_requests'
         ];
 
         $totalMinutes = 0;

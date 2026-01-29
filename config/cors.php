@@ -12,6 +12,7 @@ return [
         'http://localhost:3000',
         'http://127.0.0.1:3000',
         'https://money-frontend-swart.vercel.app',
+        'https://eduoasis.vercel.app',
         'https://engaged-launch-locale-social.trycloudflare.com',
     ],
 

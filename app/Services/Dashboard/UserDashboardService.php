@@ -9,6 +9,7 @@ use App\Models\JambAdmissionLetterRequest;
 use App\Models\JambUploadStatusRequest;
 use App\Models\JambAdmissionStatusRequest;
 use App\Models\JambAdmissionResultNotificationRequest;
+use App\Models\JambPinBindingRequest;
 
 class UserDashboardService
 {
@@ -21,6 +22,7 @@ class UserDashboardService
             'JAMB Upload Status' => JambUploadStatusRequest::where('user_id', $user->id),
             'Checking Admission Status' => JambAdmissionStatusRequest::where('user_id', $user->id),
             'JAMB Results Notifications' => JambAdmissionResultNotificationRequest::where('user_id', $user->id),
+            'JAMB PIN Binding' => JambPinBindingRequest::where('user_id', $user->id)
         ];
 
         $totalJobs = 0;
@@ -79,6 +81,7 @@ class UserDashboardService
                 JambUploadStatusRequest::where('user_id', $user->id)->latest()->first(),
                 JambAdmissionStatusRequest::where('user_id', $user->id)->latest()->first(),
                 JambAdmissionResultNotificationRequest::where('user_id', $user->id)->latest()->first(),
+                JambPinBindingRequest::where('user_id', $user->id)->latest()->first(),
             ])
                 ->filter()
                 ->sortByDesc('created_at')
