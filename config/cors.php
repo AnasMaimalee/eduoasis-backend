@@ -14,6 +14,8 @@ return [
         'https://money-frontend-swart.vercel.app',
         'https://eduoasis.vercel.app',
         'https://engaged-launch-locale-social.trycloudflare.com',
+        'https://www.eduoasis.com.ng',
+        'https://fishing-houston-conference-geneva.trycloudflare.com'
     ],
 
     'allowed_origins_patterns' => [
