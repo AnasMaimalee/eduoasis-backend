@@ -15,7 +15,8 @@ return [
         'https://eduoasis.vercel.app',
         'https://engaged-launch-locale-social.trycloudflare.com',
         'https://www.eduoasis.com.ng',
-        'https://fishing-houston-conference-geneva.trycloudflare.com'
+        'https://fishing-houston-conference-geneva.trycloudflare.com',
+        'https://beaches-donated-tba-registered.trycloudflare.com'
     ],
 
     'allowed_origins_patterns' => [
