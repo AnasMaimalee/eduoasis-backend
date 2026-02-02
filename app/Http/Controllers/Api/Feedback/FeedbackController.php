@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api\Feedback;
 
 use App\Http\Controllers\Controller;
@@ -10,14 +11,12 @@ class FeedbackController extends Controller
 {
     public function index()
     {
-        $superadmin = Auth::user();
-        if(!$superadmin->role === "superadmin"){
-            abort(403, 'Unauthorized action.');
-        }
-        $feedbacks = Feedback::all();
+        $user = Auth::user();
+
+        
+
         return response()->json([
-            'feedbacks' => $feedbacks,
-            'message' => 'Feedbacks retrieved successfully.'
+            'data' => Feedback::latest()->get(),
         ]);
     }
 
@@ -25,48 +24,41 @@ class FeedbackController extends Controller
     {
         $validated = $request->validate([
             'full_name' => 'required|string|max:255',
-            'email' => 'required|email',
-            'message' => 'required|string',
+            'email'     => 'required|email',
+            'message'   => 'required|string',
         ]);
 
         $feedback = Feedback::create([
             'full_name' => $validated['full_name'],
-            'email' => $validated['email'],
-            'message' => $validated['message'],
-            'ip_address' => $request->ip(),
-            'status' => 'pending',
+            'email'     => $validated['email'],
+            'message'   => $validated['message'],
+            'ip_address'=> $request->ip(),
+            'status'    => 'pending',
         ]);
 
         return response()->json([
-            'feedback' => $feedback,
-            'message' => 'Feedback created successfully.'
+            'data' => $feedback,
         ], 201);
-    }
-
-
-    public function showUserFeedback()
-    {
-        $feedback = Feedback::where('status',  'accepted')->first();
-        return response()->json([
-            'feedback' => $feedback,
-            'message' => 'Feedback retrieved successfully.'
-        ]);
     }
 
     public function updateStatus(Request $request, Feedback $feedback)
     {
+        
+
         $validated = $request->validate([
-            'status' => 'required|in:pending,accepted,rejected',
+            'status' => 'required|in:accepted,rejected',
+            'rejection_reason' => 'required_if:status,rejected|string|nullable',
         ]);
 
         $feedback->update([
             'status' => $validated['status'],
+            'rejection_reason' => $validated['status'] === 'rejected'
+                ? $validated['rejection_reason']
+                : null,
         ]);
 
         return response()->json([
-            'feedback' => $feedback,
-            'message' => 'Feedback status updated successfully.'
+            'data' => $feedback,
         ]);
     }
-
 }

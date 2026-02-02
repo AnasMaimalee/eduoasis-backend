@@ -535,6 +535,11 @@ public function login(Request $request)
                     'icon' => 'LinkOutlined',
                 ],
                 [
+                    'label' => 'Feedbacks',
+                    'route' => '/superadmin/feedback',
+                    'icon' => 'CommentOutlined',
+                ],
+                [
                     'label' => 'Settings',
                     'route' => '/superadmin/setting',
                     'icon' => 'SettingOutlined',

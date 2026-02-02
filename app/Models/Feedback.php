@@ -19,6 +19,7 @@ class Feedback extends BaseModel
         'message',
         'ip_address',
         'status',
+        'rejection_reason',
     ];
 
 
