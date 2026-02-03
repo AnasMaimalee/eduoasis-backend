@@ -396,7 +396,7 @@ public function login(Request $request)
                 [
                     'label' => 'JAMB Olevel Status',
                     'route' => '/user/services/jamb-olevel-status',
-                    'icon' => 'ProfileOutlined',
+                    'icon' => 'IdcardOutlined',
                 ],
                 [
                     'label' => 'Admission Status Checking',
