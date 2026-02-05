@@ -29,7 +29,7 @@ class ExamSubmittedNotification extends Notification
             ->line('Your CBT exam has been submitted successfully.')
             ->action(
                 'View Result',
-                "{$frontendUrl}/exams/{$this->examId}/result"
+                "{$frontendUrl}/user/results/{$this->examId}"
             )
             ->line('Thank you for using our CBT platform.');
     }
