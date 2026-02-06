@@ -14,27 +14,23 @@ class ExamSubmittedNotification extends Notification
         $this->examId = $examId;
     }
 
-    public function via($notifiable)
+    public function via($notifiable): array
     {
-        return ['mail', 'database']; // email + database notification
+        return ['mail', 'database'];
     }
 
     public function toMail($notifiable): MailMessage
     {
-        $frontendUrl = config('app.frontend_url');
-
         return (new MailMessage)
             ->subject('CBT Exam Submitted')
-            ->greeting('Hello ' . $notifiable->name)
-            ->line('Your CBT exam has been submitted successfully.')
-            ->action(
-                'View Result',
-                "{$frontendUrl}/user/results/{$this->examId}"
-            )
-            ->line('Thank you for using our CBT platform.');
+            ->view('emails.exams.exam-submitted', [
+                'user' => $notifiable,
+                'examId' => $this->examId,
+                'frontendUrl' => config('app.frontend_url'),
+            ]);
     }
 
-    public function toArray($notifiable)
+    public function toArray($notifiable): array
     {
         return [
             'exam_id' => $this->examId,

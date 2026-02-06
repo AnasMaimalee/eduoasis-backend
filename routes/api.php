@@ -52,6 +52,8 @@ use App\Http\Controllers\Api\CBT\SuperAdmin\AdminCbtController;
 use App\Http\Controllers\Api\CBT\SuperAdmin\CbtSettingController;
 use App\Http\Controllers\Api\CBT\SuperAdmin\LiveCbtController;
 
+//Visitor
+use App\Http\Controllers\Api\Visitor\VisitorController;
 
 use Illuminate\Support\Facades\Broadcast;
 Broadcast::routes();
@@ -466,3 +468,9 @@ Route::middleware('auth:api')->group(function () {
 
 Route::post('/feedback', [FeedbackController::class, 'store']);
 Route::get('/feedback', [FeedbackController::class, 'showUserFeedback']);
+
+// Visitors
+
+// routes/api.php
+
+Route::post('/track-visitor', [VisitorController::class, 'store']);

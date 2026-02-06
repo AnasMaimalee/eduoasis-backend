@@ -540,6 +540,11 @@ public function login(Request $request)
                     'icon' => 'CommentOutlined',
                 ],
                 [
+                    'label' => 'Visitors',
+                    'route' => '/superadmin/visitors',
+                    'icon' => 'EyeOutlined',
+                ],
+                [
                     'label' => 'Settings',
                     'route' => '/superadmin/setting',
                     'icon' => 'SettingOutlined',
