@@ -11,9 +11,9 @@ class VisitorController extends Controller
 {
     public function index()
     {
-        $visitors = Visistor::all();
+        $visitors = Visitor::all();
 
-        return respose->json([
+        return response()->json([
             'message' => 'Visitors Fetched',
             'data' => $visitors
         ]);

@@ -472,5 +472,5 @@ Route::get('/feedback', [FeedbackController::class, 'showUserFeedback']);
 // Visitors
 
 // routes/api.php
-
+Route::get('/track-visitor', [VisitorController::class, 'index']);
 Route::post('/track-visitor', [VisitorController::class, 'store']);

@@ -539,11 +539,11 @@ public function login(Request $request)
                     'route' => '/superadmin/feedback',
                     'icon' => 'CommentOutlined',
                 ],
-                [
-                    'label' => 'Visitors',
-                    'route' => '/superadmin/visitors',
-                    'icon' => 'EyeOutlined',
-                ],
+                // [
+                //     'label' => 'Visitors',
+                //     'route' => '/superadmin/visitors',
+                //     'icon' => 'EyeOutlined',
+                // ],
                 [
                     'label' => 'Settings',
                     'route' => '/superadmin/setting',
