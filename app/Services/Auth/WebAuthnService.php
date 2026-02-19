@@ -14,7 +14,7 @@ class WebAuthnService
      */
     private function getRpId(): string
     {
-        $frontendUrl = config('webauthn.frontend_url') ?? env('FRONTEND_URL');
+        $frontendUrl = config('webAuthn.frontend_url') ?? env('FRONTEND_URL');
 
         if (!$frontendUrl) {
             throw new \RuntimeException('FRONTEND_URL is not defined');
@@ -23,20 +23,46 @@ class WebAuthnService
         $host = parse_url($frontendUrl, PHP_URL_HOST);
 
         if (!$host) {
-            throw new \RuntimeException('Invalid FRONTEND_URL');
+            throw new \RuntimeException('Invalid FRONTEND_URL format');
         }
 
-        // ✅ Localhost allowed
-        if (in_array($host, ['localhost', '127.0.0.1'])) {
+        // Localhost / loopback - allowed as-is
+        if (in_array($host, ['localhost', '127.0.0.1', '::1'])) {
             return $host;
         }
 
-        // ✅ Cloudflare tunnels (must be full domain)
+        // Cloudflare tunnels - allowed as-is
         if (str_ends_with($host, '.trycloudflare.com')) {
             return $host;
         }
 
-        // ✅ Vercel / Netlify / any hosted platform → FULL hostname
+        // ────────────────────────────────────────────────
+        // For real domains: return the registrable domain suffix
+        // Examples:
+        //   www.eduoasis.com.ng     → eduoasis.com.ng
+        //   app.eduoasis.com.ng     → eduoasis.com.ng
+        //   staging.eduoasis.co.uk  → eduoasis.co.uk
+        // ────────────────────────────────────────────────
+
+        $parts = explode('.', $host);
+
+        // If we have at least 3 parts (subdomain + domain + tld)
+        if (count($parts) >= 3) {
+            // Common Nigerian pattern: .com.ng, .org.ng, .edu.ng, etc.
+            // Take last 2 parts
+            $lastTwo = array_slice($parts, -2);
+            $tld = end($lastTwo); // 'ng'
+
+            if ($tld === 'ng' && in_array($lastTwo[0], ['com', 'org', 'edu', 'net', 'gov', 'co'])) {
+                return implode('.', $lastTwo); // eduoasis.com.ng
+            }
+
+            // Fallback for most other countries (.com, .co, .io, etc.)
+            // Take last 2 parts
+            return implode('.', array_slice($parts, -2));
+        }
+
+        // If somehow only 2 parts (unlikely), return as-is
         return $host;
     }
 
