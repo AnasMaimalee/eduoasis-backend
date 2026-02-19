@@ -20,7 +20,8 @@ return [
         'https://www.eduoasis.com.ng',
         'https://fishing-houston-conference-geneva.trycloudflare.com',
         'https://beaches-donated-tba-registered.trycloudflare.com',
-        'https://eduoasis.com.ng'
+        'https://eduoasis.com.ng',
+        'https://completion-workplace-traditions-rom.trycloudflare.com'
     ],
 
     'allowed_origins_patterns' => [
