@@ -16,12 +16,9 @@ return [
         'http://127.0.0.1:3000',
         'https://money-frontend-swart.vercel.app',
         'https://eduoasis.vercel.app',
-        'https://engaged-launch-locale-social.trycloudflare.com',
         'https://www.eduoasis.com.ng',
-        'https://fishing-houston-conference-geneva.trycloudflare.com',
-        'https://beaches-donated-tba-registered.trycloudflare.com',
         'https://eduoasis.com.ng',
-        'https://completion-workplace-traditions-rom.trycloudflare.com'
+        'https://stars-eagles-herald-grove.trycloudflare.com',
     ],
 
     'allowed_origins_patterns' => [
