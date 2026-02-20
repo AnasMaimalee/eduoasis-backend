@@ -18,7 +18,7 @@ return [
         'https://eduoasis.vercel.app',
         'https://www.eduoasis.com.ng',
         'https://eduoasis.com.ng',
-        'https://stars-eagles-herald-grove.trycloudflare.com',
+        'https://disclaimer-publicly-beer-sin.trycloudflare.com',
     ],
 
     'allowed_origins_patterns' => [
