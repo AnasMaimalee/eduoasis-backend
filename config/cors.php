@@ -18,9 +18,7 @@ return [
         'https://eduoasis.vercel.app',
         'https://www.eduoasis.com.ng',
         'https://eduoasis.com.ng',
-        'https://disclaimer-publicly-beer-sin.trycloudflare.com',
-        'https://celebs-barbie-dropped-contain.trycloudflare.com',
-        'https://signatures-please-suggestion-paris.trycloudflare.com'
+        'https://pipes-trainer-forward-seekers.trycloudflare.com'
     ],
 
     'allowed_origins_patterns' => [
