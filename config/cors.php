@@ -19,6 +19,7 @@ return [
         'https://www.eduoasis.com.ng',
         'https://eduoasis.com.ng',
         'https://disclaimer-publicly-beer-sin.trycloudflare.com',
+        'https://celebs-barbie-dropped-contain.trycloudflare.com',
     ],
 
     'allowed_origins_patterns' => [
