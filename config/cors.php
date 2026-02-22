@@ -18,7 +18,7 @@ return [
         'https://eduoasis.vercel.app',
         'https://www.eduoasis.com.ng',
         'https://eduoasis.com.ng',
-        'https://confidence-denver-baby-tournament.trycloudflare.com'
+        'https://prayer-referrals-collecting-ago.trycloudflare.com'
     ],
 
     'allowed_origins_patterns' => [
