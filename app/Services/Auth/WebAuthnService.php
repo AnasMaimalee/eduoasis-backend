@@ -32,11 +32,6 @@ class WebAuthnService
         // Strip leading 'www.' for broader compatibility (allows www & non-www origins)
         $host = preg_replace('/^www\./i', '', $host);
 
-        // Optional: Add more validation (e.g. reject IPs in prod)
-        // if (filter_var($host, FILTER_VALIDATE_IP)) {
-        //     throw new \RuntimeException("RP ID cannot be an IP address in production.");
-        // }
-
         return $host;
     }
 
