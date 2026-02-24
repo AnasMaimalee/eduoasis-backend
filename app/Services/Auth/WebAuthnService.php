@@ -14,7 +14,11 @@ class WebAuthnService
      */
     private function getRpId(): string
     {
-        return parse_url(config('webAuthn.frontend_url'), PHP_URL_HOST);
+        $url = config('webAuthn.frontend_url', config('app.url', 'http://localhost'));
+
+        $host = parse_url($url, PHP_URL_HOST);
+
+        return $host ?? 'localhost'; 
     }
 
 
