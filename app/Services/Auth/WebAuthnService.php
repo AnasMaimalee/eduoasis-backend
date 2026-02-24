@@ -10,28 +10,53 @@ use Illuminate\Support\Str;
 class WebAuthnService
 {
     /**
-     * Extract RP ID from FRONTEND_URL
+     * Get the Relying Party ID safely.
+     * - In local env: always 'localhost' (browser exception)
+     * - In production/staging: extract host from config, strip 'www.', fallback to 'localhost' if invalid
      */
     private function getRpId(): string
     {
-        $url = config('webAuthn.frontend_url', config('app.url', 'http://localhost'));
+        if (app()->environment('local')) {
+            return 'localhost';
+        }
+
+        $url = config('webAuthn.frontend_url', config('app.url', 'https://localhost'));
 
         $host = parse_url($url, PHP_URL_HOST);
 
-        return $host ?? 'localhost'; 
-    }
+        if ($host === null || $host === false || empty($host)) {
+            // Fallback – should rarely hit in prod if config is set
+            return 'localhost';
+        }
 
+        // Strip leading 'www.' for broader compatibility (allows www & non-www origins)
+        $host = preg_replace('/^www\./i', '', $host);
+
+        // Optional: Add more validation (e.g. reject IPs in prod)
+        // if (filter_var($host, FILTER_VALIDATE_IP)) {
+        //     throw new \RuntimeException("RP ID cannot be an IP address in production.");
+        // }
+
+        return $host;
+    }
 
     /**
      * Registration options
      */
     public function registerOptions(User $user): array
     {
+        $rp = [
+            'name' => config('app.name', 'EduOasis'),
+        ];
+
+        // Only include 'id' if not localhost (browser defaults correctly when omitted)
+        $rpId = $this->getRpId();
+        if ($rpId !== 'localhost') {
+            $rp['id'] = $rpId;
+        }
+
         return [
-            'rp' => [
-                'name' => config('app.name', 'EduOasis'),
-                'id'   => $this->getRpId(),
-            ],
+            'rp' => $rp,
             'user' => [
                 'id'          => base64_encode((string) $user->getKey()),
                 'name'        => $user->email,
@@ -72,7 +97,7 @@ class WebAuthnService
             'credential_id' => $data['id'],
             'alias' => 'Biometric Device',
             'counter' => 0,
-            'rp_id' => $this->getRpId(),
+            'rp_id' => $this->getRpId(),  // Consistent scoping
         ]);
     }
 
@@ -87,9 +112,8 @@ class WebAuthnService
             ->pluck('credential_id')
             ->toArray();
 
-        return [
+        $options = [
             'challenge' => base64_encode(random_bytes(32)),
-            'rpId' => $rpId,
             'timeout' => 60000,
             'userVerification' => 'discouraged',
             'allowCredentials' => array_map(fn ($id) => [
@@ -97,6 +121,13 @@ class WebAuthnService
                 'id' => $id,
             ], $credentials),
         ];
+
+        // Only include rpId if not localhost (browser infers it)
+        if ($rpId !== 'localhost') {
+            $options['rpId'] = $rpId;
+        }
+
+        return $options;
     }
 
     /**
@@ -115,7 +146,7 @@ class WebAuthnService
 
         $credential->increment('counter');
 
-        return $credential->user;
+        return $credential->authenticatable;  // Assuming relation is 'authenticatable' (polymorphic)
     }
 
     /**
@@ -124,6 +155,7 @@ class WebAuthnService
     public function credentials(User $user)
     {
         return WebAuthnCredential::where('authenticatable_id', $user->id)
+            ->where('authenticatable_type', User::class)
             ->where('rp_id', $this->getRpId())
             ->latest()
             ->get();
@@ -135,10 +167,9 @@ class WebAuthnService
     public function destroy(User $user, ?string $credentialId): bool
     {
         return WebAuthnCredential::where('authenticatable_id', $user->id)
+            ->where('authenticatable_type', User::class)
             ->where('rp_id', $this->getRpId())
-            ->when($credentialId, fn ($q) =>
-                $q->where('credential_id', $credentialId)
-            )
+            ->when($credentialId, fn ($q) => $q->where('credential_id', $credentialId))
             ->delete() > 0;
     }
 }
